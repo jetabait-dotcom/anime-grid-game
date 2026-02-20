@@ -53,8 +53,6 @@
           // โหลดและเชื่อมต่อ Firebase อัตโนมัติเมื่อเข้าเว็บ
           useEffect(() => {
             const initFirebase = async () => {
-              if (typeof __firebase_config === 'undefined') return; // ทำงานเฉพาะบนเซิร์ฟเวอร์
-              
               try {
                 // ใช้ native import ผ่าน Function เพื่อป้องกันไม่ให้ Babel แปลงเป็น require()
                 const nativeImport = new Function('url', 'return import(url)');
@@ -63,24 +61,33 @@
                 const authModule = await nativeImport('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js');
                 const fsModule = await nativeImport('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js');
 
-                const config = JSON.parse(__firebase_config);
-                const app = appModule.initializeApp(config);
+                // 🌟 ใส่ firebaseConfig จากในรูปเรียบร้อยแล้ว 🌟
+                const firebaseConfig = {
+                  apiKey: "AIzaSyDy3A8XwrKA-BXjlueZzzTa5BQ1R1SFVzk",
+                  authDomain: "game-hub-jetabait.firebaseapp.com",
+                  projectId: "game-hub-jetabait",
+                  storageBucket: "game-hub-jetabait.firebasestorage.app",
+                  messagingSenderId: "788930921640",
+                  appId: "1:788930921640:web:f54c7d47012b4f50a0ee9d",
+                  measurementId: "G-TL5GQ6BX61"
+                };
+
+                const app = appModule.initializeApp(firebaseConfig);
                 const auth = authModule.getAuth(app);
                 const db = fsModule.getFirestore(app);
 
                 setFirebaseDb(db);
                 setFbFuncs(fsModule);
 
-                // ระบบล็อคอินแบบไม่ระบุตัวตน (เพื่อความปลอดภัยในการเขียนฐานข้อมูล)
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                  await authModule.signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                  await authModule.signInAnonymously(auth);
-                }
-
+                // ล็อคอินแบบไม่ระบุตัวตน (Anonymous)
+                await authModule.signInAnonymously(auth);
                 authModule.onAuthStateChanged(auth, (u) => setFirebaseUser(u));
               } catch (e) {
                 console.error("Firebase connection error:", e);
+                // ดักจับ Error แจ้งเตือนผู้ใช้ให้ไปเปิดใช้งาน Anonymous ใน Firebase Console
+                if (e.code === 'auth/configuration-not-found' || e.message.includes('configuration-not-found')) {
+                  alert("⚠️ เชื่อมต่อระบบออนไลน์ไม่สำเร็จ!\n\nกรุณาไปที่เว็บ Firebase Console:\n1. เลือกเมนู Build -> Authentication\n2. ไปที่แท็บ Sign-in method\n3. กดเปิดใช้งาน 'Anonymous' (ผู้ใช้ไม่ระบุตัวตน)\n4. กด Save แล้วกลับมารีเฟรชหน้านี้อีกครั้งครับ");
+                }
               }
             };
             initFirebase();
@@ -171,8 +178,9 @@
             
             // สุ่มรหัสห้อง 5 ตัวอักษร
             const newRoomId = Math.random().toString(36).substring(2, 7).toUpperCase();
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const roomRef = funcs.doc(db, 'artifacts', appId, 'public', 'data', 'rooms', newRoomId);
+            
+            // เปลี่ยน Path ให้ใช้คอลเลกชัน rooms ธรรมดา
+            const roomRef = funcs.doc(db, 'rooms', newRoomId);
             
             try {
               await funcs.setDoc(roomRef, { 
@@ -248,8 +256,8 @@
           useEffect(() => {
             if (mode !== 'multi' || !roomId || !db || !funcs || !user) return;
 
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const roomRef = funcs.doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+            // เปลี่ยน Path ให้ใช้คอลเลกชัน rooms ธรรมดา
+            const roomRef = funcs.doc(db, 'rooms', roomId);
 
             const unsubscribe = funcs.onSnapshot(roomRef, (docSnap) => {
               if (docSnap.exists()) {
@@ -306,8 +314,7 @@
             
             if (mode === 'multi' && roomId && db && funcs) {
               // ซิงค์ขึ้นฐานข้อมูล
-              const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-              const roomRef = funcs.doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+              const roomRef = funcs.doc(db, 'rooms', roomId);
               try {
                 await funcs.setDoc(roomRef, { grid: newGrid }, { merge: true });
               } catch (e) {
@@ -322,8 +329,7 @@
           const handleReset = async () => {
             const emptyGrid = Array(9).fill(null);
             if (mode === 'multi' && roomId && db && funcs) {
-              const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-              const roomRef = funcs.doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+              const roomRef = funcs.doc(db, 'rooms', roomId);
               await funcs.setDoc(roomRef, { grid: emptyGrid }, { merge: true });
             } else {
               setGrid(emptyGrid);
