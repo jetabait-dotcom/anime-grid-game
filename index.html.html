@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anime Hub & Grid</title>
+    <title>Anime Hub & Grid (Multiplayer)</title>
     <!-- โหลด Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- โหลด React -->
@@ -26,100 +26,208 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- สร้างไอคอนจำลองแทนการโหลดจาก lucide-react เพื่อให้ใช้งานในไฟล์เดียวได้ ---
+        // --- Mock Icons ---
         const Gamepad2 = ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="15" y1="13" x2="15.01" y2="13"></line><line x1="18" y1="11" x2="18.01" y2="11"></line><rect x="2" y="6" width="20" height="12" rx="2"></rect></svg>;
         const Grid3X3 = ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>;
-        const Music = ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>;
-        const Trophy = ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>;
         const ArrowLeft = ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>;
         const CheckCircle2 = ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>;
         const Search = ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
         const X = ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
         const ImageIcon = ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>;
+        const Users = ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>;
+        const User = ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
 
-        const TOP_CATEGORIES = [
-          "แนวเพลง / ไอดอล",
-          "เกียวโตแอนิเมชัน",
-          "ดัดแปลงจากมังฮวา"
-        ];
-
-        const LEFT_CATEGORIES = [
-          "ชีวิตในโรงเรียน",
-          "มีหูสัตว์ / หางสัตว์",
-          "กีฬา / การแข่งขัน"
-        ];
+        const TOP_CATEGORIES = ["แนวเพลง / ไอดอล", "เกียวโตแอนิเมชัน", "ดัดแปลงจากมังฮวา"];
+        const LEFT_CATEGORIES = ["ชีวิตในโรงเรียน", "มีหูสัตว์ / หางสัตว์", "กีฬา / การแข่งขัน"];
 
         function App() {
-          const [currentScreen, setCurrentScreen] = useState('menu');
+          const [currentScreen, setCurrentScreen] = useState('menu'); // 'menu', 'lobby', 'game'
+          const [gameMode, setGameMode] = useState('local'); // 'local', 'multi'
+          const [roomId, setRoomId] = useState('');
+          
+          // Firebase States
+          const [firebaseDb, setFirebaseDb] = useState(null);
+          const [firebaseUser, setFirebaseUser] = useState(null);
+          const [fbFuncs, setFbFuncs] = useState(null);
+
+          // โหลดและเชื่อมต่อ Firebase อัตโนมัติเมื่อเข้าเว็บ
+          useEffect(() => {
+            const initFirebase = async () => {
+              if (typeof __firebase_config === 'undefined') return; // ทำงานเฉพาะบนเซิร์ฟเวอร์
+              
+              try {
+                // ใช้ native import ผ่าน Function เพื่อป้องกันไม่ให้ Babel แปลงเป็น require()
+                const nativeImport = new Function('url', 'return import(url)');
+                
+                const appModule = await nativeImport('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js');
+                const authModule = await nativeImport('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js');
+                const fsModule = await nativeImport('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js');
+
+                const config = JSON.parse(__firebase_config);
+                const app = appModule.initializeApp(config);
+                const auth = authModule.getAuth(app);
+                const db = fsModule.getFirestore(app);
+
+                setFirebaseDb(db);
+                setFbFuncs(fsModule);
+
+                // ระบบล็อคอินแบบไม่ระบุตัวตน (เพื่อความปลอดภัยในการเขียนฐานข้อมูล)
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                  await authModule.signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                  await authModule.signInAnonymously(auth);
+                }
+
+                authModule.onAuthStateChanged(auth, (u) => setFirebaseUser(u));
+              } catch (e) {
+                console.error("Firebase connection error:", e);
+              }
+            };
+            initFirebase();
+          }, []);
+
+          const startGameLocal = () => {
+            setGameMode('local');
+            setRoomId('');
+            setCurrentScreen('game');
+          };
+
+          const openLobby = () => {
+            setCurrentScreen('lobby');
+          };
+
+          const joinRoom = (id) => {
+            setGameMode('multi');
+            setRoomId(id.toUpperCase());
+            setCurrentScreen('game');
+          };
 
           return (
             <div className="min-h-screen bg-neutral-900 text-neutral-100 font-sans selection:bg-indigo-500/30">
-              {currentScreen === 'menu' ? (
-                <MainMenu onSelectGame={() => setCurrentScreen('game')} />
-              ) : (
-                <AnimeGrid onBack={() => setCurrentScreen('menu')} />
+              {currentScreen === 'menu' && (
+                <MainMenu onLocal={startGameLocal} onMulti={openLobby} />
+              )}
+              {currentScreen === 'lobby' && (
+                <LobbyMenu 
+                  onBack={() => setCurrentScreen('menu')} 
+                  onJoin={joinRoom} 
+                  db={firebaseDb} 
+                  funcs={fbFuncs} 
+                />
+              )}
+              {currentScreen === 'game' && (
+                <AnimeGrid 
+                  mode={gameMode} 
+                  roomId={roomId} 
+                  onBack={() => setCurrentScreen('menu')}
+                  db={firebaseDb}
+                  funcs={fbFuncs}
+                  user={firebaseUser}
+                />
               )}
             </div>
           );
         }
 
-        function MainMenu({ onSelectGame }) {
+        function MainMenu({ onLocal, onMulti }) {
           return (
             <div className="flex flex-col items-center justify-center min-h-screen p-6">
-              <div className="max-w-4xl w-full">
-                <header className="mb-12 text-center flex flex-col items-center">
-                  <div className="w-16 h-16 bg-neutral-800 rounded-2xl flex items-center justify-center mb-6 shadow-xl border border-neutral-700">
-                    <Gamepad2 size={32} className="text-indigo-400" />
-                  </div>
-                  <h1 className="text-4xl md:text-6xl font-black tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
-                    Anime Hub
-                  </h1>
-                  <p className="text-neutral-400 text-sm md:text-base max-w-lg mx-auto">
-                    ศูนย์รวมมินิเกมสำหรับสายอนิเมะ เลือกเกมที่อยากเล่นด้านล่างได้เลย
-                  </p>
-                </header>
+              <div className="max-w-xl w-full text-center">
+                <div className="w-20 h-20 mx-auto bg-neutral-800 rounded-2xl flex items-center justify-center mb-6 shadow-xl border border-neutral-700">
+                  <Gamepad2 size={40} className="text-indigo-400" />
+                </div>
+                <h1 className="text-4xl md:text-6xl font-black tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
+                  Anime Grid
+                </h1>
+                <p className="text-neutral-400 mb-12">
+                  เกมเติมชื่ออนิเมะลงตารางบิงโก เลือกโหมดที่ต้องการเล่นได้เลย
+                </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                  <button 
-                    onClick={onSelectGame}
-                    className="group relative bg-neutral-800/50 hover:bg-neutral-800 border border-neutral-700 hover:border-indigo-500/50 rounded-2xl p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10 overflow-hidden"
-                  >
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-opacity group-hover:opacity-100 opacity-0"></div>
-                    <div className="w-12 h-12 bg-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center mb-4">
-                      <Grid3X3 size={24} />
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-2">Anime Grid</h3>
-                    <p className="text-sm text-neutral-400">
-                      ทดสอบความจำ! เติมชื่ออนิเมะให้ตรงกับเงื่อนไขตารางบิงโกทั้ง 9 ช่อง
-                    </p>
-                    <div className="mt-6 flex items-center text-sm font-medium text-indigo-400 group-hover:text-indigo-300">
-                      เล่นเลย <ArrowLeft className="ml-2 inline-block rotate-180" size={16} />
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button onClick={onLocal} className="bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 p-6 rounded-2xl transition-all group">
+                    <User size={32} className="mx-auto mb-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                    <h3 className="font-bold text-lg text-white mb-2">เล่นคนเดียว</h3>
+                    <p className="text-xs text-neutral-400">เล่นชิลๆ คนเดียวในเครื่องนี้</p>
                   </button>
 
-                  <div className="relative bg-neutral-800/30 border border-neutral-800 rounded-2xl p-6 text-left opacity-70 grayscale">
-                    <div className="w-12 h-12 bg-neutral-700/50 text-neutral-500 rounded-xl flex items-center justify-center mb-4">
-                      <Music size={24} />
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-2">Guess the OP</h3>
-                    <p className="text-sm text-neutral-500">
-                      ทายชื่อเพลงเปิดอนิเมะจากเสียงดนตรี 5 วินาทีแรก
-                    </p>
-                    <div className="mt-6 inline-flex px-3 py-1 bg-neutral-800 rounded-full text-xs font-medium text-neutral-400">
-                      เร็วๆ นี้
-                    </div>
+                  <button onClick={onMulti} className="bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 p-6 rounded-2xl transition-all group">
+                    <Users size={32} className="mx-auto mb-4 text-indigo-400 group-hover:scale-110 transition-transform" />
+                    <h3 className="font-bold text-lg text-indigo-100 mb-2">เล่นกับเพื่อน (ออนไลน์)</h3>
+                    <p className="text-xs text-indigo-300/70">สร้างห้องหรือใส่รหัสเพื่อเล่นตารางเดียวกันแบบเรียลไทม์</p>
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        function LobbyMenu({ onBack, onJoin, db, funcs }) {
+          const [joinId, setJoinId] = useState('');
+          const [isCreating, setIsCreating] = useState(false);
+
+          const handleCreateRoom = async () => {
+            if (!db || !funcs) return alert('กำลังเชื่อมต่อเซิร์ฟเวอร์ รอสักครู่นะ');
+            setIsCreating(true);
+            
+            // สุ่มรหัสห้อง 5 ตัวอักษร
+            const newRoomId = Math.random().toString(36).substring(2, 7).toUpperCase();
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const roomRef = funcs.doc(db, 'artifacts', appId, 'public', 'data', 'rooms', newRoomId);
+            
+            try {
+              await funcs.setDoc(roomRef, { 
+                grid: Array(9).fill(null),
+                createdAt: new Date().toISOString()
+              });
+              onJoin(newRoomId);
+            } catch (e) {
+              console.error(e);
+            }
+            setIsCreating(false);
+          };
+
+          return (
+            <div className="flex flex-col items-center justify-center min-h-screen p-6">
+              <div className="max-w-md w-full">
+                <button onClick={onBack} className="mb-8 flex items-center text-neutral-400 hover:text-white transition-colors text-sm">
+                  <ArrowLeft size={16} className="mr-2" /> กลับเมนูหลัก
+                </button>
+                
+                <div className="bg-neutral-800 border border-neutral-700 p-8 rounded-3xl shadow-2xl">
+                  <h2 className="text-2xl font-bold mb-6 text-center text-white">ระบบห้องเล่นด้วยกัน</h2>
+                  
+                  <button 
+                    onClick={handleCreateRoom} 
+                    disabled={isCreating}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition-colors mb-6 disabled:opacity-50"
+                  >
+                    {isCreating ? 'กำลังสร้างห้อง...' : 'สร้างห้องใหม่'}
+                  </button>
+
+                  <div className="relative flex py-5 items-center">
+                    <div className="flex-grow border-t border-neutral-700"></div>
+                    <span className="flex-shrink-0 mx-4 text-neutral-500 text-sm">หรือ</span>
+                    <div className="flex-grow border-t border-neutral-700"></div>
                   </div>
 
-                  <div className="relative bg-neutral-800/30 border border-neutral-800 rounded-2xl p-6 text-left opacity-70 grayscale">
-                    <div className="w-12 h-12 bg-neutral-700/50 text-neutral-500 rounded-xl flex items-center justify-center mb-4">
-                      <Trophy size={24} />
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-2">Tier List Maker</h3>
-                    <p className="text-sm text-neutral-500">
-                      จัดอันดับตัวละครหรืออนิเมะเรื่องโปรดของคุณตามหมวดหมู่
-                    </p>
-                    <div className="mt-6 inline-flex px-3 py-1 bg-neutral-800 rounded-full text-xs font-medium text-neutral-400">
-                      เร็วๆ นี้
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium text-neutral-300">เข้าร่วมห้องเพื่อน</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        value={joinId}
+                        onChange={(e) => setJoinId(e.target.value.toUpperCase())}
+                        placeholder="ใส่รหัสห้อง (เช่น KON)" 
+                        className="flex-1 bg-neutral-900 border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500 uppercase font-mono"
+                        maxLength={10}
+                      />
+                      <button 
+                        onClick={() => joinId.trim() && onJoin(joinId)}
+                        disabled={!joinId.trim()}
+                        className="bg-neutral-700 hover:bg-neutral-600 disabled:opacity-50 text-white px-6 rounded-xl font-medium transition-colors"
+                      >
+                        เข้าห้อง
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -128,13 +236,32 @@
           );
         }
 
-        function AnimeGrid({ onBack }) {
+        function AnimeGrid({ mode, roomId, onBack, db, funcs, user }) {
           const [grid, setGrid] = useState(Array(9).fill(null));
           const [activeCell, setActiveCell] = useState(null);
           
           const [searchQuery, setSearchQuery] = useState('');
           const [searchResults, setSearchResults] = useState([]);
           const [isSearching, setIsSearching] = useState(false);
+
+          // อัปเดตตารางแบบเรียลไทม์ (เมื่อเล่นโหมดออนไลน์)
+          useEffect(() => {
+            if (mode !== 'multi' || !roomId || !db || !funcs || !user) return;
+
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const roomRef = funcs.doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+
+            const unsubscribe = funcs.onSnapshot(roomRef, (docSnap) => {
+              if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.grid) setGrid(data.grid);
+              }
+            }, (error) => {
+              console.error("Sync error:", error);
+            });
+
+            return () => unsubscribe();
+          }, [mode, roomId, db, funcs, user]);
 
           const handleSearch = async () => {
             if (!searchQuery.trim()) return;
@@ -145,40 +272,29 @@
                 Page(page: 1, perPage: 15) {
                   media(search: $search, type: ANIME, sort: POPULARITY_DESC) {
                     id
-                    title {
-                      romaji
-                      english
-                      native
-                    }
-                    coverImage {
-                      large
-                    }
+                    title { romaji english native }
+                    coverImage { large }
                   }
                 }
               }
             `;
 
-            const variables = { search: searchQuery };
-
             try {
               const response = await fetch('https://graphql.anilist.co', {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Accept': 'application/json',
-                },
-                body: JSON.stringify({ query, variables })
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ query, variables: { search: searchQuery } })
               });
               const data = await response.json();
               setSearchResults(data.data.Page.media);
             } catch (error) {
-              console.error("Error fetching data:", error);
+              console.error("Fetch error:", error);
             } finally {
               setIsSearching(false);
             }
           };
 
-          const handleSelectAnime = (anime) => {
+          const handleSelectAnime = async (anime) => {
             if (activeCell === null) return;
             
             const newGrid = [...grid];
@@ -187,9 +303,32 @@
               title: anime.title.english || anime.title.romaji || anime.title.native,
               image: anime.coverImage.large
             };
-            setGrid(newGrid);
+            
+            if (mode === 'multi' && roomId && db && funcs) {
+              // ซิงค์ขึ้นฐานข้อมูล
+              const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+              const roomRef = funcs.doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+              try {
+                await funcs.setDoc(roomRef, { grid: newGrid }, { merge: true });
+              } catch (e) {
+                console.error("Error saving:", e);
+              }
+            } else {
+              setGrid(newGrid); // โหมดปกติ
+            }
             closeModal();
           };
+
+          const handleReset = async () => {
+            const emptyGrid = Array(9).fill(null);
+            if (mode === 'multi' && roomId && db && funcs) {
+              const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+              const roomRef = funcs.doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+              await funcs.setDoc(roomRef, { grid: emptyGrid }, { merge: true });
+            } else {
+              setGrid(emptyGrid);
+            }
+          }
 
           const closeModal = () => {
             setActiveCell(null);
@@ -203,23 +342,25 @@
             <div className="p-4 md:p-8">
               <div className="max-w-3xl mx-auto">
                 
-                <button 
-                  onClick={onBack}
-                  className="mb-6 flex items-center text-neutral-400 hover:text-white transition-colors text-sm font-medium group"
-                >
-                  <ArrowLeft size={16} className="mr-2 group-hover:-translate-x-1 transition-transform" />
-                  กลับเมนูหลัก
-                </button>
+                <div className="flex items-center justify-between mb-6">
+                  <button onClick={onBack} className="flex items-center text-neutral-400 hover:text-white transition-colors text-sm font-medium">
+                    <ArrowLeft size={16} className="mr-2" /> กลับ
+                  </button>
+                  
+                  {mode === 'multi' && (
+                    <div className="bg-indigo-900/50 border border-indigo-500/50 px-4 py-1.5 rounded-full text-sm font-mono text-indigo-200 flex items-center shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+                      <span className="text-indigo-400 mr-2">รหัสห้อง:</span> 
+                      <span className="font-bold tracking-wider">{roomId}</span>
+                    </div>
+                  )}
+                </div>
 
                 <header className="mb-6 text-center">
                   <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent mb-2">
-                    Anime Grid
+                    Anime Grid {mode === 'multi' ? '(ออนไลน์)' : ''}
                   </h1>
-                  <p className="text-neutral-400 text-xs md:text-sm">
-                    เติมชื่ออนิเมะให้ตรงกับเงื่อนไขในตารางให้ครบทั้ง 9 ช่อง
-                  </p>
                   {isGridFull && (
-                    <div className="mt-4 inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-400 px-4 py-2 rounded-full font-medium text-sm">
+                    <div className="mt-4 inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-400 px-4 py-2 rounded-full font-medium text-sm animate-bounce">
                       <CheckCircle2 size={18} />
                       ทำครบทุกช่องแล้ว!
                     </div>
@@ -255,11 +396,7 @@
                             >
                               {cellData ? (
                                 <>
-                                  <img 
-                                    src={cellData.image} 
-                                    alt={cellData.title} 
-                                    className="absolute inset-0 w-full h-full object-cover"
-                                  />
+                                  <img src={cellData.image} alt={cellData.title} className="absolute inset-0 w-full h-full object-cover" />
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex items-end p-2 opacity-100 group-hover:opacity-100 transition-opacity">
                                     <span className="text-[10px] md:text-xs font-semibold text-white truncate w-full text-center text-shadow">
                                       {cellData.title}
@@ -269,7 +406,7 @@
                               ) : (
                                 <div className="text-neutral-400 flex flex-col items-center gap-1 group-hover:text-indigo-400 transition-colors">
                                   <Search size={20} className="md:w-6 md:h-6" />
-                                  <span className="text-[10px] md:text-xs font-medium">เลือกอนิเมะ</span>
+                                  <span className="text-[10px] md:text-xs font-medium">เพิ่มรูป</span>
                                 </div>
                               )}
                             </button>
@@ -283,23 +420,22 @@
 
                 <div className="mt-6 text-center">
                   <button 
-                    onClick={() => setGrid(Array(9).fill(null))}
+                    onClick={handleReset}
                     className="px-5 py-2 text-sm bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-lg transition-colors border border-neutral-700"
                   >
-                    เริ่มใหม่ทั้งหมด
+                    ล้างกระดาน
                   </button>
                 </div>
 
               </div>
 
+              {/* หน้าต่างค้นหา */}
               {activeCell !== null && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
                   <div className="bg-neutral-800 border border-neutral-700 rounded-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh] shadow-2xl shadow-black/50">
                     
                     <div className="p-3 md:p-4 border-b border-neutral-700 flex justify-between items-center bg-neutral-800/80">
-                      <h3 className="font-bold text-base md:text-lg text-white">
-                        ค้นหาอนิเมะ
-                      </h3>
+                      <h3 className="font-bold text-base md:text-lg text-white">ค้นหาอนิเมะ</h3>
                       <button onClick={closeModal} className="text-neutral-400 hover:text-white transition-colors">
                         <X size={20} />
                       </button>
@@ -312,7 +448,7 @@
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                          placeholder="พิมพ์ชื่ออนิเมะ..."
+                          placeholder="พิมพ์ชื่อเรื่อง (ภาษาอังกฤษ)"
                           className="flex-1 text-sm bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                           autoFocus
                         />
@@ -327,9 +463,7 @@
 
                       <div className="overflow-y-auto max-h-[50vh] pr-2 space-y-2 custom-scrollbar">
                         {searchResults.length === 0 && !isSearching && searchQuery !== '' && (
-                          <div className="text-center text-sm text-neutral-500 py-8">
-                            ไม่พบผลลัพธ์ ลองใช้ชื่อภาษาอังกฤษดูนะ
-                          </div>
+                          <div className="text-center text-sm text-neutral-500 py-8">ไม่พบผลลัพธ์ ลองใช้ชื่อภาษาอังกฤษดูนะ</div>
                         )}
                         
                         {searchResults.map((anime) => (
@@ -346,12 +480,8 @@
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-white truncate text-xs md:text-sm">
-                                {anime.title.english || anime.title.romaji}
-                              </p>
-                              <p className="text-[10px] md:text-xs text-neutral-400 truncate mt-1">
-                                {anime.title.native}
-                              </p>
+                              <p className="font-medium text-white truncate text-xs md:text-sm">{anime.title.english || anime.title.romaji}</p>
+                              <p className="text-[10px] md:text-xs text-neutral-400 truncate mt-1">{anime.title.native}</p>
                             </div>
                           </button>
                         ))}
