@@ -171,6 +171,8 @@
         function LobbyMenu({ onBack, onJoin, db, funcs }) {
           const [joinId, setJoinId] = useState('');
           const [isCreating, setIsCreating] = useState(false);
+          const [isJoining, setIsJoining] = useState(false);
+          const [joinError, setJoinError] = useState('');
 
           const handleCreateRoom = async () => {
             if (!db || !funcs) return alert('กำลังเชื่อมต่อเซิร์ฟเวอร์ รอสักครู่นะ');
@@ -192,6 +194,27 @@
               console.error(e);
             }
             setIsCreating(false);
+          };
+
+          const handleJoinRoom = async () => {
+            if (!joinId.trim() || !db || !funcs) return;
+            setIsJoining(true);
+            setJoinError('');
+            
+            try {
+              const roomRef = funcs.doc(db, 'rooms', joinId.trim());
+              const docSnap = await funcs.getDoc(roomRef);
+              
+              if (docSnap.exists()) {
+                onJoin(joinId.trim());
+              } else {
+                setJoinError('ไม่พบรหัสห้องนี้ กรุณาตรวจสอบอีกครั้ง');
+              }
+            } catch (e) {
+              console.error(e);
+              setJoinError('เกิดข้อผิดพลาดในการตรวจสอบห้อง');
+            }
+            setIsJoining(false);
           };
 
           return (
@@ -224,19 +247,25 @@
                       <input 
                         type="text" 
                         value={joinId}
-                        onChange={(e) => setJoinId(e.target.value.toUpperCase())}
+                        onChange={(e) => {
+                          setJoinId(e.target.value.toUpperCase());
+                          setJoinError('');
+                        }}
+                        onKeyDown={(e) => e.key === 'Enter' && handleJoinRoom()}
                         placeholder="ใส่รหัสห้อง (เช่น KON)" 
                         className="flex-1 bg-neutral-900 border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500 uppercase font-mono"
                         maxLength={10}
+                        disabled={isJoining}
                       />
                       <button 
-                        onClick={() => joinId.trim() && onJoin(joinId)}
-                        disabled={!joinId.trim()}
-                        className="bg-neutral-700 hover:bg-neutral-600 disabled:opacity-50 text-white px-6 rounded-xl font-medium transition-colors"
+                        onClick={handleJoinRoom}
+                        disabled={!joinId.trim() || isJoining}
+                        className="bg-neutral-700 hover:bg-neutral-600 disabled:opacity-50 text-white px-6 rounded-xl font-medium transition-colors whitespace-nowrap"
                       >
-                        เข้าห้อง
+                        {isJoining ? 'ตรวจสอบ...' : 'เข้าห้อง'}
                       </button>
                     </div>
+                    {joinError && <p className="text-red-400 text-sm mt-1">{joinError}</p>}
                   </div>
                 </div>
               </div>
