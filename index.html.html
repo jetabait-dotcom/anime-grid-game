@@ -40,11 +40,29 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Export Firebase functions to window so React can access them
-        window.FirebaseSDK = { 
-            initializeApp, getAuth, signInAnonymously, signInWithCustomToken, 
-            onAuthStateChanged, getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection 
+        // Firebase Config for game-hub-jetabait
+        const firebaseConfig = {
+            apiKey: "AIzaSyDy3A8XwrKA-BXjlueZzzTa5BQ1R1SFVzk",
+            authDomain: "game-hub-jetabait.firebaseapp.com",
+            projectId: "game-hub-jetabait",
+            storageBucket: "game-hub-jetabait.firebasestorage.app",
+            messagingSenderId: "788930921640",
+            appId: "1:788930921640:web:f54c7d47012b4f50a0ee9d",
+            measurementId: "G-TL5GQ6BX61"
         };
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+
+            window.FirebaseSDK = { 
+                auth, db, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, 
+                signInAnonymously, signInWithCustomToken, onAuthStateChanged 
+            };
+        } catch (e) {
+            console.error("Firebase Init Error:", e);
+        }
     </script>
 
     <script type="text/babel">
@@ -80,39 +98,37 @@
             const [fbServices, setFbServices] = useState(null);
             const [roomId, setRoomId] = useState('');
             const [playerName, setPlayerName] = useState(localStorage.getItem('anime_player_name') || '');
-            const [appId, setAppId] = useState('anime-grid-hub');
             const [isReady, setIsReady] = useState(false);
+            
+            // Using your project ID directly to ensure Rule 1 consistency
+            const appId = 'game-hub-jetabait';
 
             useEffect(() => {
                 const init = async () => {
-                    // Wait for SDK to be attached to window
                     const checkSDK = setInterval(async () => {
                         if (window.FirebaseSDK) {
                             clearInterval(checkSDK);
                             const sdk = window.FirebaseSDK;
                             
-                            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-                                apiKey: "", authDomain: "", projectId: "", storageBucket: "", messagingSenderId: "", appId: ""
-                            };
-                            
                             try {
-                                const app = sdk.initializeApp(firebaseConfig);
-                                const auth = sdk.getAuth(app);
-                                const db = sdk.getFirestore(app);
-                                const currentAppId = typeof __app_id !== 'undefined' ? __app_id : 'anime-grid-hub';
-                                setAppId(currentAppId);
-
-                                // Authenticate FIRST as per Rule 3
+                                const auth = sdk.auth;
+                                
+                                // Enhanced Auth logic to prevent mismatch errors from blocking initialization
                                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                                    await sdk.signInWithCustomToken(auth, __initial_auth_token);
+                                    try {
+                                        await sdk.signInWithCustomToken(auth, __initial_auth_token);
+                                    } catch (tokenErr) {
+                                        // On mismatch, fallback to anonymous for the configured project
+                                        await sdk.signInAnonymously(auth);
+                                    }
                                 } else {
                                     await sdk.signInAnonymously(auth);
                                 }
 
                                 sdk.onAuthStateChanged(auth, (u) => {
-                                    setUser(u);
                                     if (u) {
-                                        setFbServices({ auth, db, ...sdk });
+                                        setUser(u);
+                                        setFbServices(sdk);
                                         setIsReady(true);
                                     }
                                 });
@@ -181,12 +197,12 @@
                     </div>
                     <h1 className="text-6xl font-extrabold text-gradient mb-4">Game Hub</h1>
                     <p className="text-neutral-500 mb-12 text-center max-w-sm font-medium">ยินดีต้อนรับสู่ศูนย์รวมมินิเกมสายอนิเมะ</p>
-                    <button onClick={onSelect} className="w-full max-w-sm bg-[#262626] p-6 rounded-[2rem] border border-white/5 hover:border-indigo-500/30 transition-all text-left group">
-                        <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-500/20 transition-colors">
+                    <button onClick={onSelect} className="w-full max-w-sm bg-[#262626] p-8 rounded-[2.5rem] border border-white/5 hover:border-indigo-500/30 transition-all text-left group shadow-lg">
+                        <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-indigo-500/20 transition-colors">
                             <Icon name="grid" size={24} className="text-indigo-400" />
                         </div>
-                        <h3 className="text-2xl font-bold mb-1 text-white">Anime Grid</h3>
-                        <p className="text-neutral-500 text-sm leading-relaxed">เติมชื่ออนิเมะลงตารางบิงโก</p>
+                        <h3 className="text-2xl font-extrabold mb-1 text-white">Anime Grid</h3>
+                        <p className="text-neutral-500 text-sm font-medium leading-relaxed">เติมชื่ออนิเมะลงตารางบิงโก</p>
                     </button>
                 </div>
             );
@@ -209,10 +225,7 @@
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-[50rem] px-4">
-                        <button 
-                            onClick={onLocal}
-                            className="bg-[#262626] hover:bg-[#2e2e2e] p-12 rounded-[2rem] border border-white/5 transition-all group flex flex-col items-center text-center"
-                        >
+                        <button onClick={onLocal} className="bg-[#262626] hover:bg-[#2e2e2e] p-12 rounded-[2rem] border border-white/5 transition-all group flex flex-col items-center text-center shadow-xl">
                             <div className="mb-6 flex items-center justify-center">
                                 <Icon name="user" size={42} className="text-[#4ade80] group-hover:scale-110 transition-transform" />
                             </div>
@@ -220,10 +233,7 @@
                             <p className="text-neutral-500 text-sm font-medium">เล่นชิลๆ คนเดียวในเครื่องนี้</p>
                         </button>
 
-                        <button 
-                            onClick={onMulti}
-                            className="bg-[#1e1b4b]/40 hover:bg-[#1e1b4b]/60 p-12 rounded-[2rem] border border-[#4338ca]/30 transition-all group flex flex-col items-center text-center"
-                        >
+                        <button onClick={onMulti} className="bg-[#1e1b4b]/40 hover:bg-[#1e1b4b]/60 p-12 rounded-[2rem] border border-[#4338ca]/30 transition-all group flex flex-col items-center text-center shadow-xl">
                             <div className="mb-6 flex items-center justify-center">
                                 <Icon name="users" size={42} className="text-[#818cf8] group-hover:scale-110 transition-transform" />
                             </div>
@@ -247,6 +257,7 @@
                 if (!playerName.trim() || !user || !fb) return;
                 setLoading(true);
                 const id = Math.random().toString(36).substring(2, 5).toUpperCase();
+                // Rule 1: Strict Paths
                 const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', id);
                 try {
                     await fb.setDoc(roomRef, {
@@ -293,7 +304,7 @@
                             
                             <div className="space-y-8">
                                 <div className="space-y-3">
-                                    <label className="text-sm font-medium text-neutral-400 px-1">ชื่อของคุณ (แสดงในห้อง)</label>
+                                    <label className="text-sm font-medium text-neutral-400 px-1 font-bold">ชื่อของคุณ (แสดงในห้อง)</label>
                                     <input 
                                         value={playerName} 
                                         onChange={e => setPlayerName(e.target.value)} 
@@ -302,11 +313,7 @@
                                     />
                                 </div>
                                 
-                                <button 
-                                    onClick={handleCreate} 
-                                    disabled={loading || !playerName} 
-                                    className="w-full btn-primary py-5 rounded-2xl font-extrabold text-xl disabled:opacity-50 text-white shadow-xl shadow-indigo-500/10"
-                                >
+                                <button onClick={handleCreate} disabled={loading || !playerName} className="w-full btn-primary py-5 rounded-2xl font-extrabold text-xl disabled:opacity-50 text-white shadow-xl shadow-indigo-500/10 transition-all">
                                     {loading ? 'กำลังประมวลผล...' : 'สร้างห้องใหม่'}
                                 </button>
 
@@ -314,25 +321,14 @@
                                     <div className="absolute inset-0 flex items-center">
                                         <div className="w-full border-t border-white/5"></div>
                                     </div>
-                                    <span className="relative px-4 bg-[#262626] text-neutral-600 text-sm font-medium uppercase tracking-widest">หรือ</span>
+                                    <span className="relative px-4 bg-[#262626] text-neutral-600 text-sm font-medium uppercase tracking-widest font-bold">หรือ</span>
                                 </div>
 
                                 <div className="space-y-3">
-                                    <label className="text-sm font-medium text-neutral-400 px-1">เข้าร่วมห้องเพื่อน</label>
+                                    <label className="text-sm font-medium text-neutral-400 px-1 font-bold">เข้าร่วมห้องเพื่อน</label>
                                     <div className="flex gap-3">
-                                        <input 
-                                            value={roomCode} 
-                                            onChange={e => setRoomCode(e.target.value.toUpperCase())} 
-                                            className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 font-mono focus:outline-none text-white uppercase tracking-widest text-lg" 
-                                            placeholder="ใส่รหัสห้อง (เช่น KON)"
-                                        />
-                                        <button 
-                                            onClick={handleJoin} 
-                                            disabled={loading || !playerName || !roomCode} 
-                                            className="bg-[#333333] hover:bg-[#3d3d3d] px-8 rounded-2xl font-bold text-lg text-[#737373] hover:text-white transition-all"
-                                        >
-                                            เข้าห้อง
-                                        </button>
+                                        <input value={roomCode} onChange={e => setRoomCode(e.target.value.toUpperCase())} className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 font-mono focus:outline-none text-white uppercase tracking-widest text-lg font-bold" placeholder="ใส่รหัสห้อง (เช่น KON)" />
+                                        <button onClick={handleJoin} disabled={loading || !playerName || !roomCode} className="bg-[#333333] hover:bg-[#3d3d3d] px-8 rounded-2xl font-bold text-lg text-[#737373] hover:text-white transition-all">เข้าห้อง</button>
                                     </div>
                                 </div>
                             </div>
@@ -363,7 +359,7 @@
                         setPlayers(data.players || {});
                         setOwner(data.owner || '');
                     }
-                }, (err) => console.error("Snapshot Error:", err));
+                }, (err) => console.error("Sync Error:", err));
                 return () => unsubscribe();
             }, [roomId, user, fb, appId]);
 
@@ -383,34 +379,21 @@
                 setSearching(true);
                 const query = `query ($s: String) { Page(perPage: 12) { media(search: $s, type: ANIME, sort: POPULARITY_DESC) { id title { romaji english } coverImage { large } } } }`;
                 try {
-                    const res = await fetch('https://graphql.anilist.co', { 
-                        method: 'POST', 
-                        headers: { 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify({ query, variables: { s: search } }) 
-                    });
+                    const res = await fetch('https://graphql.anilist.co', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query, variables: { s: search } }) });
                     const data = await res.json();
                     setResults(data.data.Page.media);
-                } catch (e) { 
-                    console.error("Search Error:", e); 
-                } finally { 
-                    setSearching(false); 
-                }
+                } catch (e) { console.error(e); }
+                finally { setSearching(false); }
             };
 
             const selectAnime = async (anime) => {
                 if (activeCell === null) return;
                 const newGrid = [...grid];
-                newGrid[activeCell] = { 
-                    title: anime.title.english || anime.title.romaji, 
-                    image: anime.coverImage.large, 
-                    by: playerName || 'Player' 
-                };
+                newGrid[activeCell] = { title: anime.title.english || anime.title.romaji, image: anime.coverImage.large, by: playerName || 'Player' };
                 if (roomId && user && fb) {
                     const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
                     await fb.updateDoc(roomRef, { grid: newGrid });
-                } else { 
-                    setGrid(newGrid); 
-                }
+                } else { setGrid(newGrid); }
                 setActiveCell(null); setSearch(''); setResults([]);
             };
 
@@ -423,7 +406,6 @@
                         <button onClick={onBack} className="text-neutral-500 hover:text-white flex items-center font-bold transition-colors">
                             <Icon name="back" size={20} className="mr-2" /> ออก
                         </button>
-                        
                         {roomId && (
                             <div className="flex items-center gap-3">
                                 <div className="bg-[#262626] border border-white/5 px-4 py-2 rounded-2xl text-[10px] font-bold text-neutral-400 flex items-center shadow-lg">
@@ -441,16 +423,10 @@
                         <h2 className="text-[2.5rem] font-extrabold text-white mb-6 tracking-tight">Anime Grid</h2>
                         {isHost && (
                             <div className="flex flex-col items-center gap-3 p-4 bg-[#262626]/40 rounded-3xl border border-white/5 shadow-inner">
-                                <div className="flex items-center gap-2 text-neutral-500 text-[10px] font-bold uppercase tracking-widest">
-                                    เลือกขนาดตาราง
-                                </div>
+                                <div className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest font-bold">เลือกขนาดตาราง</div>
                                 <div className="flex items-center justify-center gap-3">
                                     {[3, 4, 5].map(s => (
-                                        <button 
-                                            key={s} 
-                                            onClick={() => changeSize(s)} 
-                                            className={`w-12 h-12 rounded-2xl text-xs font-bold transition-all shadow-md ${gridSize === s ? 'bg-indigo-600 text-white scale-110 shadow-indigo-500/20' : 'bg-[#262626] text-neutral-600 hover:text-neutral-300'}`}
-                                        >
+                                        <button key={s} onClick={() => changeSize(s)} className={`w-12 h-12 rounded-2xl text-xs font-bold transition-all shadow-md ${gridSize === s ? 'bg-indigo-600 text-white scale-110 shadow-indigo-500/20' : 'bg-[#262626] text-neutral-600 hover:text-neutral-300'}`}>
                                             {s}x{s}
                                         </button>
                                     ))}
@@ -461,10 +437,8 @@
 
                     <div className="bg-[#262626] p-4 md:p-10 rounded-[3rem] shadow-2xl w-full max-w-4xl overflow-x-auto custom-scrollbar border border-white/5">
                         <div className={`grid ${gridCols} gap-3 md:gap-5 min-w-[600px]`}>
-                            {/* ช่องซ้ายบนปล่อยว่างตามดีไซน์ล่าสุด */}
-                            <div className="aspect-square flex items-center justify-center">
-                                <div className="w-full h-full bg-transparent"></div>
-                            </div>
+                            {/* ช่องซ้ายบนปล่อยว่างตามรูป */}
+                            <div className="aspect-square"></div>
                             
                             {CATEGORIES.top.slice(0, gridSize).map((cat, i) => (
                                 <div key={i} className="aspect-square bg-[#333545] rounded-3xl flex items-center justify-center p-3 text-center text-[10px] md:text-xs font-bold text-indigo-300 border border-indigo-500/10 shadow-inner">
@@ -481,21 +455,17 @@
                                         const idx = rowIdx * gridSize + colIdx;
                                         const cell = grid[idx];
                                         return (
-                                            <button key={idx} onClick={() => setActiveCell(idx)} className="aspect-square bg-[#1a1a1a] hover:bg-[#222] transition-all rounded-3xl overflow-hidden group relative border border-white/5 shadow-inner flex flex-col items-center justify-center">
+                                            <button key={idx} onClick={() => setActiveCell(idx)} className="aspect-square bg-[#1a1a1a] hover:bg-[#222] transition-all rounded-3xl overflow-hidden group relative border border-white/5 flex flex-col items-center justify-center shadow-inner">
                                                 {cell ? (
                                                     <React.Fragment>
                                                         <img src={cell.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                                                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <p className="text-[10px] font-bold text-white leading-tight truncate">{cell.title}</p>
+                                                            <p className="text-[10px] font-bold text-white truncate">{cell.title}</p>
                                                             <p className="text-[8px] text-neutral-500 mt-1 font-medium">โดย {cell.by}</p>
                                                         </div>
                                                         <div className="absolute top-2 right-2 bg-[#4ade80] text-black rounded-full p-1 shadow-lg"><Icon name="check" size={10} strokeWidth={4} /></div>
                                                     </React.Fragment>
-                                                ) : (
-                                                    <div className="flex flex-col items-center justify-center text-neutral-800 group-hover:text-indigo-400/50 transition-colors">
-                                                        <Icon name="search" size={24} />
-                                                    </div>
-                                                )}
+                                                ) : <Icon name="search" size={24} className="text-neutral-800 group-hover:text-indigo-400/50 transition-colors" />}
                                             </button>
                                         );
                                     })}
@@ -504,10 +474,7 @@
                         </div>
                     </div>
 
-                    <button 
-                        onClick={() => confirm("ต้องการล้างกระดานและตั้งต้นใหม่?") && changeSize(gridSize)}
-                        className="mt-12 text-neutral-700 hover:text-red-400 transition-colors text-[10px] font-bold uppercase tracking-[0.2em] px-6 py-2 rounded-xl"
-                    >
+                    <button onClick={() => confirm("ต้องการล้างกระดานและเริ่มใหม่?") && changeSize(gridSize)} className="mt-12 text-neutral-700 hover:text-red-400 transition-colors text-[10px] font-bold uppercase tracking-[0.2em] px-6 py-2 rounded-xl font-bold">
                         Reset Grid Data
                     </button>
 
@@ -515,32 +482,19 @@
                         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
                             <div className="w-full max-w-xl bg-[#262626] rounded-[2.5rem] overflow-hidden flex flex-col max-h-[85vh] shadow-2xl border border-white/5 animate-slide-up">
                                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-[#2a2a2a]">
-                                    <h3 className="text-2xl font-bold text-white tracking-tight">เลือกอนิเมะของคุณ</h3>
+                                    <h3 className="text-2xl font-bold text-white tracking-tight font-bold">เลือกอนิเมะของคุณ</h3>
                                     <button onClick={() => setActiveCell(null)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-neutral-500"><Icon name="close" /></button>
                                 </div>
                                 <div className="p-8">
                                     <div className="flex gap-3 mb-8">
-                                        <input 
-                                            autoFocus 
-                                            value={search} 
-                                            onChange={e => setSearch(e.target.value)} 
-                                            onKeyDown={e => e.key === 'Enter' && searchAnime()} 
-                                            className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-white transition-all shadow-inner font-medium" 
-                                            placeholder="พิมพ์ชื่อเรื่อง (ภาษาอังกฤษ)..." 
-                                        />
-                                        <button onClick={searchAnime} disabled={searching} className="btn-primary px-8 rounded-2xl font-bold text-white shadow-lg">
-                                            {searching ? '...' : 'ค้นหา'}
-                                        </button>
+                                        <input autoFocus value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchAnime()} className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-white transition-all shadow-inner font-medium" placeholder="พิมพ์ชื่อเรื่อง (ภาษาอังกฤษ)..." />
+                                        <button onClick={searchAnime} disabled={searching} className="btn-primary px-8 rounded-2xl font-bold text-white shadow-lg transition-all font-bold">{searching ? '...' : 'ค้นหา'}</button>
                                     </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto max-h-[45vh] pr-2 custom-scrollbar">
                                         {results.map(anime => (
                                             <button key={anime.id} onClick={() => selectAnime(anime)} className="group text-left animate-slide-up">
-                                                <div className="aspect-[3/4] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] shadow-lg border border-white/5">
-                                                    <img src={anime.coverImage.large} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                                                </div>
-                                                <p className="text-[10px] font-bold text-neutral-400 group-hover:text-white transition-colors line-clamp-2 leading-tight">
-                                                    {anime.title.romaji}
-                                                </p>
+                                                <div className="aspect-[3/4] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] shadow-lg border border-white/5"><img src={anime.coverImage.large} className="w-full h-full object-cover group-hover:scale-110 transition-transform" /></div>
+                                                <p className="text-[10px] font-bold text-neutral-400 group-hover:text-white transition-colors line-clamp-2 leading-tight font-bold">{anime.title.romaji}</p>
                                             </button>
                                         ))}
                                     </div>
@@ -557,9 +511,7 @@
             if (rootElement && window.ReactDOM && window.React) {
                 const root = window.ReactDOM.createRoot(rootElement);
                 root.render(<App />);
-            } else { 
-                setTimeout(startApp, 50); 
-            }
+            } else { setTimeout(startApp, 50); }
         };
         startApp();
     </script>
