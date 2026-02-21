@@ -16,13 +16,13 @@
             font-family: 'Anuphan', sans-serif; 
             margin: 0; 
             overflow-x: hidden; 
-            line-height: 1.6; /* ปรับเพื่อให้สระไทยไม่ซ้อนกัน */
+            line-height: 1.6;
         }
         .text-gradient { background: linear-gradient(to right, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .btn-primary { background-color: #4f46e5; transition: all 0.2s; }
-        .thai-header { letter-spacing: 0.02em; line-height: 1.3; } /* คลาสพิเศษสำหรับหัวข้อภาษาไทย */
+        .thai-header { letter-spacing: 0.02em; line-height: 1.3; font-weight: 800; }
         .btn-primary:hover { background-color: #4338ca; transform: translateY(-1px); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -81,7 +81,7 @@
                 download: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>,
                 trash: <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" />,
                 book: <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V5H6.5A2.5 2.5 0 0 0 4 7.5v12z" />,
-                edit_icon: <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                settings: <Fragment><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></Fragment>
             };
             return (
                 <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -125,7 +125,7 @@
                 }, 100);
             }, []);
 
-            if (!user) return <div className="min-h-screen flex flex-col items-center justify-center text-indigo-400 font-bold animate-pulse text-2xl tracking-tight">กำลังเชื่อมต่อ...</div>;
+            if (!user) return <div className="min-h-screen flex flex-col items-center justify-center text-indigo-400 font-bold animate-pulse text-2xl tracking-tight thai-header">กำลังเชื่อมต่อ...</div>;
 
             return (
                 <div className="min-h-screen flex flex-col bg-[#171717]">
@@ -202,20 +202,20 @@
             };
             return (
                 <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up">
-                    <div className="w-full max-w-md bg-[#262626] p-10 rounded-[2.5rem] border border-white/5 shadow-2xl">
-                        <button onClick={onBack} className="text-neutral-500 mb-6 flex items-center font-bold text-sm hover:text-white transition-colors"><Icon name="back" size={16} className="mr-2" /> กลับหน้าหลัก</button>
-                        <h2 className="text-3xl font-black mb-8 text-center text-gradient uppercase thai-header">ห้อง {displayTitles[gameType]}</h2>
-                        <div className="space-y-6">
-                            <input value={playerName} onChange={e => {setPlayerName(e.target.value); localStorage.setItem('anime_player_name', e.target.value);}} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-4 text-white font-bold focus:outline-none" placeholder="ใส่ชื่อเล่นของคุณ" />
-                            <button onClick={() => handleAction(true)} className="w-full btn-primary py-4 rounded-2xl font-bold shadow-lg thai-header">สร้างห้องใหม่</button>
-                            <div className="relative flex items-center py-2">
+                    <div className="w-full max-w-md bg-[#262626] p-8 rounded-[2rem] border border-white/5 shadow-2xl">
+                        <button onClick={onBack} className="text-neutral-500 mb-6 flex items-center font-bold text-xs hover:text-white transition-colors thai-header"><Icon name="back" size={14} className="mr-1" /> กลับหน้าหลัก</button>
+                        <h2 className="text-2xl font-black mb-6 text-center text-gradient uppercase thai-header">ห้อง {displayTitles[gameType]}</h2>
+                        <div className="space-y-4">
+                            <input value={playerName} onChange={e => {setPlayerName(e.target.value); localStorage.setItem('anime_player_name', e.target.value);}} className="w-full bg-[#1a1a1a] border border-white/5 rounded-xl px-5 py-3 text-white font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500/50" placeholder="ใส่ชื่อเล่นของคุณ" />
+                            <button onClick={() => handleAction(true)} className="w-full btn-primary py-3 rounded-xl font-bold shadow-lg thai-header text-lg">สร้างห้องใหม่</button>
+                            <div className="relative flex items-center py-1">
                                 <div className="flex-grow border-t border-white/5"></div>
-                                <span className="flex-shrink mx-4 text-neutral-600 text-xs font-bold uppercase thai-header">หรือ</span>
+                                <span className="flex-shrink mx-3 text-neutral-600 text-[10px] font-bold uppercase thai-header">หรือ</span>
                                 <div className="flex-grow border-t border-white/5"></div>
                             </div>
                             <div className="flex gap-2">
-                                <input value={roomCode} onChange={e => setRoomCode(e.target.value)} className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-4 text-white font-mono uppercase focus:outline-none" placeholder="รหัสห้อง" />
-                                <button onClick={() => handleAction(false)} className="bg-[#333] px-6 rounded-2xl font-bold transition-all hover:bg-[#444] thai-header">เข้าร่วม</button>
+                                <input value={roomCode} onChange={e => setRoomCode(e.target.value)} className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-xl px-5 py-3 text-white font-mono uppercase focus:outline-none focus:ring-1 focus:ring-neutral-500/50" placeholder="รหัสห้อง" />
+                                <button onClick={() => handleAction(false)} className="bg-[#333] px-5 rounded-xl font-bold transition-all hover:bg-[#444] thai-header">เข้าร่วม</button>
                             </div>
                         </div>
                     </div>
@@ -238,6 +238,8 @@
             const [searching, setSearching] = useState(false);
             const [players, setPlayers] = useState({});
             const [owner, setOwner] = useState(null);
+            const [dismissWin, setDismissWin] = useState(false);
+            const [customBingoName, setCustomBingoName] = useState('');
 
             useEffect(() => {
                 const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
@@ -257,7 +259,11 @@
             }, []);
 
             useEffect(() => {
-                if (search.trim().length > 0) {
+                if (winnerUid) setDismissWin(false);
+            }, [winnerUid]);
+
+            useEffect(() => {
+                if (searchType !== 'custom' && search.trim().length > 0) {
                     const timer = setTimeout(async () => {
                         setSearching(true);
                         try {
@@ -287,13 +293,11 @@
             const checkWin = (g, s) => {
                 const checkLine = (indices) => indices.every(idx => g[idx] && g[idx].uid === user.uid);
                 for (let r = 0; r < s; r++) {
-                    const row = [];
-                    for (let c = 0; c < s; c++) row.push(r * s + c);
+                    const row = []; for (let c = 0; c < s; c++) row.push(r * s + c);
                     if (checkLine(row)) return true;
                 }
                 for (let c = 0; c < s; c++) {
-                    const col = [];
-                    for (let r = 0; r < s; r++) col.push(r * s + c);
+                    const col = []; for (let r = 0; r < s; r++) col.push(r * s + c);
                     if (checkLine(col)) return true;
                 }
                 const d1 = [], d2 = [];
@@ -317,33 +321,44 @@
                 const won = checkWin(latestGrid, gridSize);
                 const nextTurn = order[(order.indexOf(user.uid) + 1) % order.length];
                 await fb.updateDoc(roomRef, { grid: latestGrid, turnUid: won ? user.uid : nextTurn, winnerUid: won ? user.uid : null });
-                setActiveCell(null); setSearch('');
+                setActiveCell(null); setSearch(''); setCustomBingoName('');
             };
 
             const isTurn = user.uid === turnUid;
 
             return (
                 <div className="flex-1 p-6 flex flex-col items-center animate-slide-up">
-                    <div className="w-full max-w-5xl flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-                        <button onClick={onBack} className="text-neutral-500 font-bold flex items-center hover:text-white transition-colors thai-header"><Icon name="back" className="mr-2" /> ออกจากห้อง</button>
+                    <div className="w-full max-w-6xl flex flex-wrap justify-between items-center mb-6 gap-4 bg-[#262626]/50 p-4 rounded-[2rem] border border-white/5">
+                        <button onClick={onBack} className="text-neutral-500 font-bold flex items-center hover:text-white transition-colors thai-header px-4"><Icon name="back" className="mr-2" size={18} /> กลับหน้าหลัก</button>
                         
-                        <div className="flex flex-wrap items-center justify-center gap-4">
-                            {user.uid === owner && !winnerUid && (
-                                <div className="bg-[#262626] p-1.5 rounded-2xl border border-white/5 flex gap-1 shadow-xl">
+                        <div className="flex flex-wrap items-center gap-4">
+                            {user.uid === owner && (
+                                <div className="bg-[#262626] p-1 rounded-xl border border-white/5 flex gap-1">
                                     {[3, 4, 5].map(s => (
-                                        <button key={s} onClick={() => changeGridSize(s)} className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${gridSize === s ? 'bg-indigo-600 text-white' : 'text-neutral-500 hover:text-white'}`}>
+                                        <button key={s} onClick={() => changeGridSize(s)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${gridSize === s ? 'bg-indigo-600 text-white shadow-lg' : 'text-neutral-500 hover:text-white'}`}>
                                             {s}x{s}
                                         </button>
                                     ))}
                                 </div>
                             )}
 
-                            <div className={`px-6 py-3 rounded-2xl border font-bold transition-all shadow-lg text-lg thai-header ${isTurn && !winnerUid ? 'bg-indigo-600 text-white' : 'bg-[#262626] text-neutral-500 border-white/5'}`}>
-                                {isTurn ? 'ตาของคุณแล้ว' : players[turnUid] ? `ตาของ ${players[turnUid].toUpperCase()}` : 'กำลังรอ...'}
+                            <div className={`px-5 py-2 rounded-xl border font-bold transition-all shadow-md text-sm thai-header ${isTurn && !winnerUid ? 'bg-indigo-600 text-white' : 'bg-[#1a1a1a] text-neutral-500 border-white/5'}`}>
+                                {winnerUid ? 'จบเกมแล้ว' : isTurn ? 'ตาของคุณ' : players[turnUid] ? `ตาของ ${players[turnUid].toUpperCase()}` : 'กำลังรอ...'}
                             </div>
-                            <div className="bg-indigo-600/20 px-6 py-3 rounded-2xl font-mono text-indigo-400 font-bold tracking-widest border border-indigo-500/20 uppercase">ห้อง: {roomId}</div>
+
+                            <div className="flex items-center gap-2 bg-[#1a1a1a] p-1.5 rounded-xl border border-white/5">
+                                <div className="flex -space-x-2 overflow-hidden px-2 max-w-[150px]">
+                                    {Object.entries(players).map(([uid, name]) => (
+                                        <div key={uid} title={name} className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-[10px] font-black uppercase shrink-0 transition-all ${uid === turnUid ? 'bg-indigo-600 border-indigo-400 text-white ring-2 ring-indigo-500/30 z-10' : 'bg-[#333] border-[#444] text-neutral-400'}`}>
+                                            {name.charAt(0)}
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="bg-indigo-600/20 px-4 py-1.5 rounded-lg font-mono text-indigo-400 font-black text-xs tracking-widest uppercase shadow-inner">ห้อง: {roomId}</div>
+                            </div>
                         </div>
                     </div>
+
                     <div className="bg-[#262626] p-4 md:p-8 rounded-[3rem] border border-white/5 w-full max-w-5xl overflow-x-auto shadow-2xl custom-scrollbar">
                         <div 
                             className="grid gap-2 md:gap-4 min-w-[500px]" 
@@ -371,8 +386,10 @@
                                                 onClick={() => setActiveCell(idx)} 
                                                 className={`aspect-square rounded-2xl overflow-hidden relative flex items-center justify-center transition-all ${cell ? (isMine ? 'border-4 border-green-500' : 'border-4 border-pink-500 scale-95 opacity-80') : 'bg-[#1a1a1a] hover:bg-indigo-500/10 shadow-inner border border-white/5'}`}
                                             >
-                                                {cell ? <img src={cell.image} className="w-full h-full object-cover" /> : (isTurn && !winnerUid && <div className="text-indigo-500/20 text-4xl font-black">+</div>)}
-                                                {cell && <div className="absolute top-1 right-1 bg-black/60 text-[8px] px-1 rounded text-white font-bold">{cell.by}</div>}
+                                                {cell ? (
+                                                    cell.image ? <img src={cell.image} className="w-full h-full object-cover" /> : <div className="p-2 text-center text-[10px] md:text-sm font-black text-white leading-tight thai-header">{cell.title}</div>
+                                                ) : (isTurn && !winnerUid && <div className="text-indigo-500/20 text-4xl font-black">+</div>)}
+                                                {cell && <div className="absolute bottom-1 right-1 bg-black/60 text-[8px] px-1.5 rounded text-white font-bold">{cell.by}</div>}
                                             </button>
                                         );
                                     })}
@@ -381,17 +398,20 @@
                         </div>
                     </div>
 
-                    {winnerUid && (
-                        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center">
+                    {winnerUid && !dismissWin && (
+                        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center animate-slide-up">
                             <Icon name="trophy" size={120} className="text-yellow-400 mb-8 animate-victory mx-auto" />
                             <h2 className="text-8xl font-black text-white mb-4 uppercase tracking-tighter thai-header">BINGO!</h2>
                             <p className="text-3xl text-indigo-400 font-bold mb-12 thai-header">{players[winnerUid]} ชนะการแข่งขัน!</p>
-                            <button onClick={onBack} className="btn-primary px-12 py-5 rounded-3xl font-black text-xl thai-header">กลับหน้าหลัก</button>
+                            <div className="flex gap-4">
+                                <button onClick={() => setDismissWin(true)} className="bg-white/10 px-10 py-5 rounded-3xl font-black text-xl thai-header">ดูตารางผลลัพธ์</button>
+                                {user.uid === owner && <button onClick={() => changeGridSize(gridSize)} className="btn-primary px-10 py-5 rounded-3xl font-black text-xl thai-header">เริ่มเกมใหม่</button>}
+                            </div>
                         </div>
                     )}
 
                     {activeCell !== null && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
                             <div className="w-full max-w-xl bg-[#262626] rounded-[3rem] h-[80vh] flex flex-col animate-slide-up shadow-2xl overflow-hidden border border-white/5">
                                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-[#2a2a2a]">
                                     <h3 className="text-2xl font-bold thai-header">เลือกรายการ</h3>
@@ -400,18 +420,31 @@
                                 <div className="flex border-b border-white/5 font-black bg-[#1a1a1a]">
                                     <button onClick={() => setSearchType('anime')} className={`flex-1 py-5 text-lg thai-header transition-all ${searchType === 'anime' ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-400/5' : 'text-neutral-500'}`}>อนิเมะ</button>
                                     <button onClick={() => setSearchType('character')} className={`flex-1 py-5 text-lg thai-header transition-all ${searchType === 'character' ? 'text-pink-400 border-b-2 border-pink-400 bg-pink-500/5' : 'text-neutral-500'}`}>ตัวละคร</button>
+                                    <button onClick={() => setSearchType('custom')} className={`flex-1 py-5 text-lg thai-header transition-all ${searchType === 'custom' ? 'text-orange-400 border-b-2 border-orange-400 bg-orange-400/5' : 'text-neutral-500'}`}>พิมพ์เอง</button>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                                    <input autoFocus value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl p-5 mb-6 text-white font-bold text-xl outline-none" placeholder="ค้นหา..." />
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {searching && <div className="col-span-2 text-center text-indigo-400 animate-pulse font-black py-10 uppercase tracking-widest thai-header">กำลังค้นหา...</div>}
-                                        {results.map(item => (
-                                            <button key={item.id} onClick={() => selectItem(item)} className="text-left group animate-slide-up">
-                                                <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 bg-[#1a1a1a] group-hover:border-indigo-500/50 border border-white/5"><img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /></div>
-                                                <p className="text-sm font-bold text-neutral-400 group-hover:text-white line-clamp-2">{item.title}</p>
-                                            </button>
-                                        ))}
-                                    </div>
+                                    {searchType !== 'custom' ? (
+                                        <Fragment>
+                                            <input autoFocus value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl p-5 mb-6 text-white font-bold text-xl outline-none" placeholder="ค้นหา..." />
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {searching && <div className="col-span-2 text-center text-indigo-400 animate-pulse font-black py-10 uppercase tracking-widest thai-header">กำลังค้นหา...</div>}
+                                                {results.map(item => (
+                                                    <button key={item.id} onClick={() => selectItem(item)} className="text-left group animate-slide-up">
+                                                        <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 bg-[#1a1a1a] group-hover:border-indigo-500/50 border border-white/5"><img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /></div>
+                                                        <p className="text-sm font-bold text-neutral-400 group-hover:text-white line-clamp-2 thai-header">{item.title}</p>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </Fragment>
+                                    ) : (
+                                        <div className="h-full flex flex-col items-center justify-center space-y-6 p-4">
+                                            <div className="w-full text-center">
+                                                <p className="text-neutral-500 font-bold mb-4 thai-header">พิมพ์สิ่งที่ต้องการใส่ในช่องบิงโก</p>
+                                                <input autoFocus value={customBingoName} onChange={e => setCustomBingoName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && selectItem({title: customBingoName})} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl p-6 text-white text-3xl font-black outline-none focus:ring-2 focus:ring-orange-500/30 text-center thai-header" placeholder="ชื่อที่ต้องการ..." />
+                                            </div>
+                                            <button onClick={() => selectItem({title: customBingoName})} className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-xl shadow-lg hover:bg-orange-700 transition-all active:scale-95 thai-header">ตกลง</button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -424,7 +457,7 @@
         function GuessingGame({ fb, appId, roomId, onBack, user, playerName }) {
             const [roomData, setRoomData] = useState(null);
             const [search, setSearch] = useState('');
-            const [searchType, setSearchType] = useState('anime'); // anime, character, custom
+            const [searchType, setSearchType] = useState('anime'); 
             const [results, setResults] = useState([]);
             const [picking, setPicking] = useState(false);
             const [searching, setSearching] = useState(false);
@@ -470,9 +503,12 @@
 
             return (
                 <div className="flex-1 p-6 flex flex-col items-center animate-slide-up">
-                    <div className="w-full max-w-4xl flex justify-between items-center mb-10">
-                        <button onClick={onBack} className="text-neutral-500 font-bold flex items-center hover:text-white transition-colors thai-header"><Icon name="back" className="mr-2" /> ออกจากห้อง</button>
-                        <div className="bg-pink-600/20 px-8 py-4 rounded-3xl font-mono text-pink-400 font-black tracking-widest border border-pink-500/20 shadow-inner uppercase thai-header">โหมดทายตัวละครลับ</div>
+                    <div className="w-full max-w-4xl flex flex-wrap justify-between items-center mb-10 bg-[#262626]/50 p-4 rounded-[2rem] border border-white/5">
+                        <button onClick={onBack} className="text-neutral-500 font-bold flex items-center hover:text-white transition-colors thai-header px-4"><Icon name="back" className="mr-2" size={18} /> ออกจากห้อง</button>
+                        <div className="flex items-center gap-4">
+                            <div className="bg-pink-600/20 px-6 py-2.5 rounded-xl font-mono text-pink-400 font-black text-sm tracking-widest border border-pink-500/20 shadow-inner uppercase thai-header">โหมดทายตัวละครลับ</div>
+                            <div className="bg-neutral-800 px-5 py-2.5 rounded-xl font-mono text-neutral-400 font-black text-sm tracking-widest border border-white/5 uppercase">ห้อง: {roomId}</div>
+                        </div>
                     </div>
                     <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-[#262626] p-8 rounded-[3rem] border border-white/5 shadow-2xl flex flex-col items-center text-center">
@@ -522,7 +558,7 @@
                         </div>
                     </div>
                     {picking && (
-                        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
+                        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
                             <div className="w-full max-w-xl bg-[#262626] rounded-[3rem] h-[85vh] flex flex-col animate-slide-up shadow-2xl overflow-hidden border border-white/5">
                                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-[#2a2a2a]">
                                     <h3 className="text-3xl font-black text-white thai-header">เลือกตัวละคร</h3>
@@ -672,36 +708,51 @@
 
             return (
                 <div className="flex-1 p-6 flex flex-col items-center animate-slide-up">
-                    <div className="w-full max-w-6xl flex justify-between items-center mb-8">
-                        <button onClick={onBack} className="text-neutral-500 font-bold flex items-center hover:text-white transition-colors thai-header"><Icon name="back" className="mr-2" /> ออกจากห้อง</button>
-                        <div className="flex gap-4">
-                            <button onClick={() => setAdding(true)} className="bg-orange-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center hover:bg-orange-700 transition-all shadow-lg thai-header"><Icon name="sparkles" size={18} className="mr-2" /> เพิ่มรายการ</button>
-                            <div className="bg-orange-600/20 px-6 py-3 rounded-2xl font-mono text-orange-400 font-bold border border-orange-500/20 shadow-inner uppercase">ห้อง: {roomId}</div>
-                        </div>
-                    </div>
-                    <div className="w-full max-w-6xl space-y-4">
-                        {tiers.map(tier => (
-                            <div key={tier.id} onDragOver={(e) => { e.preventDefault(); setDragOverTierId(tier.id); }} onDragLeave={() => setDragOverTierId(null)} onDrop={(e) => onDropOnTier(e, tier.id)} className={`flex bg-[#262626] rounded-2xl overflow-hidden border border-white/5 shadow-xl transition-all ${dragOverTierId === tier.id ? 'drag-over' : ''}`}>
-                                <div className={`${tier.color} w-32 flex flex-col items-center justify-center p-2 text-center shadow-inner relative group`}><span className="text-3xl font-black text-black/70">{tier.label}</span></div>
-                                <div className="flex-1 p-4 flex flex-wrap gap-4 tier-row">{tierItems.filter(i => i.tier === tier.id).map(item => renderDraggableItem(item))}</div>
+                    <div className="w-full max-w-6xl flex flex-wrap justify-between items-center mb-8 bg-[#262626]/50 p-4 rounded-[2rem] border border-white/5">
+                        <button onClick={onBack} className="text-neutral-500 font-bold flex items-center hover:text-white transition-colors thai-header px-4"><Icon name="back" className="mr-2" size={18} /> กลับหน้าหลัก</button>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <button onClick={() => setAdding(true)} className="bg-orange-600 text-white px-5 py-2 rounded-xl font-bold flex items-center hover:bg-orange-700 transition-all shadow-md thai-header text-sm"><Icon name="sparkles" size={16} className="mr-1.5" /> เพิ่มรายการ</button>
+                            
+                            <div className="flex items-center gap-2 bg-[#1a1a1a] p-1.5 rounded-xl border border-white/5">
+                                <div className="flex -space-x-2 overflow-hidden px-2 max-w-[150px]">
+                                    {Object.entries(roomData.players || {}).map(([uid, name]) => (
+                                        <div key={uid} title={name} className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-[10px] font-black uppercase shrink-0 transition-all ${uid === user.uid ? 'bg-orange-600 border-orange-400 text-white ring-2 ring-orange-500/30 z-10' : 'bg-[#333] border-[#444] text-neutral-400'}`}>
+                                            {name.charAt(0)}
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="bg-orange-600/20 px-4 py-1.5 rounded-lg font-mono text-orange-400 font-black text-xs tracking-widest uppercase shadow-inner">ห้อง: {roomId}</div>
                             </div>
-                        ))}
-                    </div>
-                    <div className="w-full max-w-6xl mt-12">
-                        <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
-                            <h3 className="text-xl font-bold text-neutral-500 uppercase tracking-widest thai-header">คลังรายการที่ยังไม่จัดอันดับ</h3>
-                            <button onClick={clearUnrankedPool} className="flex items-center gap-2 text-xs font-bold text-red-500 hover:text-red-400 transition-colors bg-red-500/10 px-4 py-2 rounded-xl border border-red-500/20 thai-header"><Icon name="trash" size={14} /> ล้างคลังทั้งหมด</button>
                         </div>
-                        <div onDragOver={(e) => { e.preventDefault(); setDragOverTierId('unranked'); }} onDragLeave={() => setDragOverTierId(null)} onDrop={(e) => onDropOnTier(e, 'unranked')} className={`flex flex-wrap gap-6 min-h-[200px] p-8 bg-[#1a1a1a] rounded-[3rem] border border-white/5 shadow-inner transition-all ${dragOverTierId === 'unranked' ? 'drag-over' : ''}`}>{tierItems.filter(i => i.tier === 'unranked').map(item => renderDraggableItem(item, true))}</div>
                     </div>
+
+                    <div className="w-full max-w-6xl space-y-8">
+                        <div className="space-y-4">
+                            {tiers.map(tier => (
+                                <div key={tier.id} onDragOver={(e) => { e.preventDefault(); setDragOverTierId(tier.id); }} onDragLeave={() => setDragOverTierId(null)} onDrop={(e) => onDropOnTier(e, tier.id)} className={`flex bg-[#262626] rounded-2xl overflow-hidden border border-white/5 shadow-xl transition-all ${dragOverTierId === tier.id ? 'drag-over' : ''}`}>
+                                    <div className={`${tier.color} w-28 md:w-32 flex flex-col items-center justify-center p-2 text-center shadow-inner relative group`}><span className="text-2xl md:text-3xl font-black text-black/70">{tier.label}</span></div>
+                                    <div className="flex-1 p-4 flex flex-wrap gap-4 tier-row">{tierItems.filter(i => i.tier === tier.id).map(item => renderDraggableItem(item))}</div>
+                                </div>
+                            ))}
+
+                            <div className="mt-12">
+                                <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                                    <h3 className="text-xl font-bold text-neutral-500 uppercase tracking-widest thai-header">คลังรายการ (ยังไม่จัดอันดับ)</h3>
+                                    <button onClick={clearUnrankedPool} className="flex items-center gap-2 text-[10px] font-black text-red-500 hover:text-red-400 transition-colors bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/20 thai-header uppercase"><Icon name="trash" size={14} /> ล้างคลัง</button>
+                                </div>
+                                <div onDragOver={(e) => { e.preventDefault(); setDragOverTierId('unranked'); }} onDragLeave={() => setDragOverTierId(null)} onDrop={(e) => onDropOnTier(e, 'unranked')} className={`flex flex-wrap gap-6 min-h-[180px] p-8 bg-[#1a1a1a] rounded-[3rem] border border-white/5 shadow-inner transition-all ${dragOverTierId === 'unranked' ? 'drag-over' : ''}`}>{tierItems.filter(i => i.tier === 'unranked').map(item => renderDraggableItem(item, true))}</div>
+                            </div>
+                        </div>
+                    </div>
+
                     {adding && (
-                        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
+                        <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
                             <div className="w-full max-w-2xl bg-[#262626] rounded-[3rem] h-[85vh] flex flex-col animate-slide-up shadow-2xl overflow-hidden border border-white/5">
                                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-[#2a2a2a]"><h3 className="text-3xl font-black text-white thai-header">เพิ่มรายการ</h3><button onClick={() => setAdding(false)}><Icon name="close" className="text-neutral-500 hover:text-white" /></button></div>
                                 <div className="flex border-b border-white/5 font-black bg-[#1a1a1a] overflow-x-auto custom-scrollbar">
-                                    <button onClick={() => setSearchType('anime_single')} className={`flex-1 py-5 px-4 text-lg thai-header transition-all flex items-center justify-center gap-2 whitespace-nowrap ${searchType === 'anime_single' ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-400/5' : 'text-neutral-500'}`}><Icon name="book" size={18} /> อนิเมะ (เรื่องเดี่ยว)</button>
+                                    <button onClick={() => setSearchType('anime_single')} className={`flex-1 py-5 px-4 text-lg thai-header transition-all flex items-center justify-center gap-2 whitespace-nowrap ${searchType === 'anime_single' ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-400/5' : 'text-neutral-500'}`}><Icon name="book" size={18} /> เรื่องเดี่ยว</button>
                                     <button onClick={() => setSearchType('anime_chars')} className={`flex-1 py-5 px-4 text-lg thai-header transition-all flex items-center justify-center gap-2 whitespace-nowrap ${searchType === 'anime_chars' ? 'text-orange-400 border-b-2 border-orange-400 bg-orange-400/5' : 'text-neutral-500'}`}><Icon name="users" size={18} /> ดึงจากชื่อเรื่อง</button>
-                                    <button onClick={() => setSearchType('character')} className={`flex-1 py-5 px-4 text-lg thai-header transition-all flex items-center justify-center gap-2 whitespace-nowrap ${searchType === 'character' ? 'text-pink-400 border-b-2 border-pink-400 bg-pink-500/5' : 'text-neutral-500'}`}><Icon name="user" size={18} /> ค้นหารายชื่อตัวละคร</button>
+                                    <button onClick={() => setSearchType('character')} className={`flex-1 py-5 px-4 text-lg thai-header transition-all flex items-center justify-center gap-2 whitespace-nowrap ${searchType === 'character' ? 'text-pink-400 border-b-2 border-pink-400 bg-pink-500/5' : 'text-neutral-500'}`}><Icon name="user" size={18} /> รายชื่อตัวละคร</button>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                                     <input autoFocus value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl p-6 mb-6 text-white font-bold text-2xl outline-none focus:ring-2 focus:ring-indigo-500/30 shadow-inner" placeholder={searchType === 'character' ? "ใส่ชื่อตัวละคร..." : "ใส่ชื่อเรื่องอนิเมะ..."} />
@@ -709,7 +760,7 @@
                                         {results.map((r, i) => (
                                             <div key={i} className="text-left group animate-slide-up bg-[#1a1a1a] p-3 rounded-2xl border border-white/5 hover:border-indigo-500/30 transition-all shadow-md">
                                                 <div className="aspect-[3/4] rounded-xl overflow-hidden mb-3 bg-[#171717] border border-white/5 shadow-inner"><img src={r.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /></div>
-                                                <p className="text-xs font-bold text-neutral-400 group-hover:text-white line-clamp-1 mb-3">{r.title}</p>
+                                                <p className="text-xs font-bold text-neutral-400 group-hover:text-white line-clamp-1 mb-3 thai-header">{r.title}</p>
                                                 {searchType === 'anime_single' ? (
                                                     <button onClick={async () => {
                                                         const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
@@ -737,7 +788,7 @@
                                                         const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
                                                         await fb.updateDoc(roomRef, { tierItems: fb.arrayUnion({ ...r, instanceId: Math.random().toString(36).substring(7), tier: 'unranked' }) });
                                                         setAdding(false); setSearch('');
-                                                    }} className="w-full py-2 bg-pink-600 hover:bg-pink-700 rounded-xl text-[10px] font-black uppercase thai-header">เพิ่มตัวละครนี้</button>
+                                                    }} className="w-full py-4 bg-pink-600 hover:bg-pink-700 rounded-xl text-[10px] font-black uppercase thai-header">เพิ่มตัวละครนี้</button>
                                                 )}
                                             </div>
                                         ))}
