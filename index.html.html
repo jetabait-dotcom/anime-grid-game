@@ -33,32 +33,32 @@ import {
 } from 'lucide-react';
 
 // --- Safe Firebase Config Initialization ---
-// เดี๋ยวพี่จะบอกให้นะน้องนะ: ถ้าน้องรันใน Vercel น้องต้องเอา Firebase Config จาก Firebase Console มาใส่ตรงนี้
-// หรือตั้งค่า Environment Variables ชื่อ VITE_FIREBASE_CONFIG (ถ้าใช้ Vite)
+// พี่ใส่ค่าจากรูปภาพที่น้องส่งมาให้แล้วนะน้องนะ
 const getFirebaseConfig = () => {
   try {
     if (typeof __firebase_config !== 'undefined') {
       return JSON.parse(__firebase_config);
     }
   } catch (e) {
-    console.warn("Global config not found, checking process.env");
+    console.warn("Global config not found, using provided fallback");
   }
   
-  // Fallback สำหรับการรันบน Vercel/Production
+  // ข้อมูลจากรูปภาพของน้อง (game-hub-jetabait)
   return {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyDy3A8XwrKA-BXjlueZzzTa5BQ1R1SFVzk",
+    authDomain: "game-hub-jetabait.firebaseapp.com",
+    projectId: "game-hub-jetabait",
+    storageBucket: "game-hub-jetabait.firebasestorage.app",
+    messagingSenderId: "788930921640",
+    appId: "1:788930921640:web:f54c7d47012b4f50a0ee9d"
   };
 };
 
 const firebaseConfig = getFirebaseConfig();
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'anime-grid-hub-v1';
+// ใช้ Project ID เป็น appId สำหรับ Path ของ Firestore
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'game-hub-jetabait';
 
-// Initialize Firebase only if not already initialized
+// Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -71,7 +71,7 @@ const CATEGORIES = {
 
 // --- Helper Functions ---
 const fetchGemini = async (prompt, systemInstruction) => {
-  const apiKey = ""; // API Key จะถูกจัดการโดยสภาพแวดล้อมรันไทม์
+  const apiKey = ""; // API Key handles by environment
   let delay = 1000;
   for (let i = 0; i < 5; i++) {
     try {
@@ -117,7 +117,6 @@ export default function App() {
         }
       } catch (err) {
         console.error("Auth Error:", err);
-        // ถ้า Firebase Config ไม่ถูกต้องจะเกิด Error ตรงนี้
         if (firebaseConfig.apiKey === "YOUR_API_KEY") {
           setConfigError(true);
         }
@@ -134,15 +133,13 @@ export default function App() {
     }
   }, [playerName]);
 
-  // Error Screen for Vercel users who forgot to set config
   if (configError) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a0a] p-6 text-center">
         <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-        <h1 className="text-2xl font-bold mb-2">ลืมตั้งค่า Firebase นะน้องนะ</h1>
+        <h1 className="text-2xl font-bold mb-2 text-white">การเชื่อมต่อฐานข้อมูลผิดพลาดนะน้องนะ</h1>
         <p className="text-neutral-500 max-w-md">
-          น้องต้องเอา Firebase Config ของตัวเองมาใส่ในโค้ดตรง `getFirebaseConfig` 
-          ก่อนเอาไปรันบน Vercel นะน้องนะ ไม่งั้นระบบฐานข้อมูลจะไม่ทำงาน
+          ตรวจสอบว่าค่า Firebase Config ในโค้ดถูกต้องตรงกับใน Console หรือไม่
         </p>
       </div>
     );
@@ -152,7 +149,7 @@ export default function App() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a0a] text-indigo-400">
         <RefreshCw className="w-10 h-10 animate-spin mb-4" />
-        <p className="font-bold tracking-widest animate-pulse uppercase">Connecting to Database...</p>
+        <p className="font-bold tracking-widest animate-pulse uppercase text-sm">Initializing Hub Experience...</p>
       </div>
     );
   }
@@ -215,13 +212,13 @@ function Menu({ onLocal, onMulti, onBack }) {
       <p className="text-neutral-400 text-lg mb-12 font-medium">เลือกโหมดการเล่นที่ต้องการนะน้องนะ</p>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
-        <button onClick={onLocal} className="bg-[#111] hover:bg-[#161616] p-12 rounded-[2.5rem] border border-white/5 transition-all group flex flex-col items-center text-center">
+        <button onClick={onLocal} className="bg-[#111] hover:bg-[#161616] p-12 rounded-[2.5rem] border border-white/5 transition-all group flex flex-col items-center text-center shadow-xl">
           <User className="w-12 h-12 text-emerald-400 mb-6 group-hover:scale-110 transition-transform" />
           <h3 className="text-2xl font-bold mb-2 text-white">เล่นคนเดียว</h3>
           <p className="text-neutral-500 text-sm">ฝึกฝนความจำคนเดียวแบบชิลๆ</p>
         </button>
         
-        <button onClick={onMulti} className="bg-indigo-950/20 hover:bg-indigo-950/30 p-12 rounded-[2.5rem] border border-indigo-500/20 transition-all group flex flex-col items-center text-center">
+        <button onClick={onMulti} className="bg-indigo-950/20 hover:bg-indigo-950/30 p-12 rounded-[2.5rem] border border-indigo-500/20 transition-all group flex flex-col items-center text-center shadow-xl">
           <Users className="w-12 h-12 text-indigo-400 mb-6 group-hover:scale-110 transition-transform" />
           <h3 className="text-2xl font-bold mb-2 text-white">เล่นกับเพื่อน (Multiplayer)</h3>
           <p className="text-neutral-500 text-sm">สร้างห้องและเติมตารางไปพร้อมกับเพื่อน</p>
@@ -367,7 +364,6 @@ function Game({ roomId, onBack, user, playerName }) {
     setSearching(true);
     let finalQuery = val;
 
-    // Check if Thai
     if (/[\u0E00-\u0E7F]/.test(val)) {
       setIsAITranslating(true);
       try {
@@ -442,7 +438,6 @@ function Game({ roomId, onBack, user, playerName }) {
 
   return (
     <div className="flex-1 flex flex-col p-4 md:p-10 max-w-7xl mx-auto w-full animate-in fade-in duration-1000">
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-10">
         <button onClick={onBack} className="text-neutral-500 hover:text-white flex items-center font-bold gap-2 transition-colors">
           <ChevronLeft /> ย้อนกลับ
@@ -481,7 +476,6 @@ function Game({ roomId, onBack, user, playerName }) {
         )}
       </div>
 
-      {/* Grid Canvas */}
       <div className="bg-[#111] p-6 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/5 overflow-x-auto">
         <div 
           className="grid gap-4 min-w-[600px]" 
@@ -543,7 +537,6 @@ function Game({ roomId, onBack, user, playerName }) {
         </button>
       </div>
 
-      {/* Modal Selection */}
       {activeCell !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-300">
           <div className="w-full max-w-2xl bg-[#111] rounded-[3rem] overflow-hidden flex flex-col max-h-[85vh] shadow-2xl border border-white/10">
