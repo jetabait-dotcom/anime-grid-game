@@ -35,28 +35,16 @@
 <body class="bg-main">
     <div id="root"></div>
 
-    <!-- Firebase SDK Setup -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "", authDomain: "", projectId: "", storageBucket: "", messagingSenderId: "", appId: ""
+        // Export Firebase functions to window so React can access them
+        window.FirebaseSDK = { 
+            initializeApp, getAuth, signInAnonymously, signInWithCustomToken, 
+            onAuthStateChanged, getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection 
         };
-
-        try {
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-
-            window.FirebaseBridge = { 
-                auth, db, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, 
-                signInAnonymously, signInWithCustomToken, onAuthStateChanged 
-            };
-        } catch (e) {
-            console.error("Firebase Init Error:", e);
-        }
     </script>
 
     <script type="text/babel">
@@ -86,52 +74,62 @@
             left: ["ชีวิตในโรงเรียน", "มีหูสัตว์/หางสัตว์", "กีฬา/การแข่งขัน", "แอคชัน/ผจญภัย", "ตลก/คอเมดี้", "สืบสวน/ระทึกขวัญ"]
         };
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'anime-grid-global';
-
         function App() {
             const [screen, setScreen] = useState('hub');
             const [user, setUser] = useState(null);
+            const [fbServices, setFbServices] = useState(null);
             const [roomId, setRoomId] = useState('');
             const [playerName, setPlayerName] = useState(localStorage.getItem('anime_player_name') || '');
-            const [fb, setFb] = useState(null);
-            const [isAuthReady, setIsAuthReady] = useState(false);
+            const [appId, setAppId] = useState('anime-grid-hub');
+            const [isReady, setIsReady] = useState(false);
 
             useEffect(() => {
-                const checkBridge = setInterval(() => {
-                    if (window.FirebaseBridge) {
-                        setFb(window.FirebaseBridge);
-                        clearInterval(checkBridge);
-                    }
-                }, 100);
-                return () => clearInterval(checkBridge);
-            }, []);
+                const init = async () => {
+                    // Wait for SDK to be attached to window
+                    const checkSDK = setInterval(async () => {
+                        if (window.FirebaseSDK) {
+                            clearInterval(checkSDK);
+                            const sdk = window.FirebaseSDK;
+                            
+                            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+                                apiKey: "", authDomain: "", projectId: "", storageBucket: "", messagingSenderId: "", appId: ""
+                            };
+                            
+                            try {
+                                const app = sdk.initializeApp(firebaseConfig);
+                                const auth = sdk.getAuth(app);
+                                const db = sdk.getFirestore(app);
+                                const currentAppId = typeof __app_id !== 'undefined' ? __app_id : 'anime-grid-hub';
+                                setAppId(currentAppId);
 
-            useEffect(() => {
-                if (!fb) return;
-                const initializeAuth = async () => {
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await fb.signInWithCustomToken(fb.auth, __initial_auth_token);
-                        } else {
-                            await fb.signInAnonymously(fb.auth);
+                                // Authenticate FIRST as per Rule 3
+                                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                    await sdk.signInWithCustomToken(auth, __initial_auth_token);
+                                } else {
+                                    await sdk.signInAnonymously(auth);
+                                }
+
+                                sdk.onAuthStateChanged(auth, (u) => {
+                                    setUser(u);
+                                    if (u) {
+                                        setFbServices({ auth, db, ...sdk });
+                                        setIsReady(true);
+                                    }
+                                });
+                            } catch (e) {
+                                console.error("Firebase Initialization Failed", e);
+                            }
                         }
-                    } catch (e) {
-                        console.error("Auth Error:", e);
-                    }
+                    }, 100);
                 };
-                initializeAuth();
-                const unsubscribe = fb.onAuthStateChanged(fb.auth, (u) => {
-                    setUser(u);
-                    if (u) setIsAuthReady(true);
-                });
-                return () => unsubscribe();
-            }, [fb]);
+                init();
+            }, []);
 
             useEffect(() => {
                 if (playerName) localStorage.setItem('anime_player_name', playerName);
             }, [playerName]);
 
-            if (!fb || !isAuthReady) {
+            if (!isReady) {
                 return (
                     <div className="min-h-screen flex flex-col items-center justify-center bg-[#171717]">
                         <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
@@ -152,7 +150,8 @@
                     )}
                     {screen === 'lobby' && (
                         <Lobby 
-                            fb={fb} 
+                            fb={fbServices} 
+                            appId={appId}
                             onBack={() => setScreen('menu')} 
                             onJoin={(id) => { setRoomId(id); setScreen('game'); }} 
                             user={user} 
@@ -162,7 +161,8 @@
                     )}
                     {screen === 'game' && (
                         <Game 
-                            fb={fb} 
+                            fb={fbServices} 
+                            appId={appId}
                             roomId={roomId} 
                             onBack={() => setScreen('menu')} 
                             user={user} 
@@ -239,12 +239,12 @@
             );
         }
 
-        function Lobby({ fb, onBack, onJoin, user, playerName, setPlayerName }) {
+        function Lobby({ fb, appId, onBack, onJoin, user, playerName, setPlayerName }) {
             const [roomCode, setRoomCode] = useState('');
             const [loading, setLoading] = useState(false);
 
             const handleCreate = async () => {
-                if (!playerName.trim() || !user) return;
+                if (!playerName.trim() || !user || !fb) return;
                 setLoading(true);
                 const id = Math.random().toString(36).substring(2, 5).toUpperCase();
                 const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', id);
@@ -264,7 +264,7 @@
             };
 
             const handleJoin = async () => {
-                if (!roomCode.trim() || !playerName.trim() || !user) return;
+                if (!roomCode.trim() || !playerName.trim() || !user || !fb) return;
                 setLoading(true);
                 const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode.toUpperCase());
                 try {
@@ -342,7 +342,7 @@
             );
         }
 
-        function Game({ fb, roomId, onBack, user, playerName }) {
+        function Game({ fb, appId, roomId, onBack, user, playerName }) {
             const [gridSize, setGridSize] = useState(3);
             const [grid, setGrid] = useState(Array(9).fill(null));
             const [players, setPlayers] = useState({});
@@ -353,7 +353,7 @@
             const [searching, setSearching] = useState(false);
 
             useEffect(() => {
-                if (!roomId || !user) return;
+                if (!roomId || !user || !fb) return;
                 const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
                 const unsubscribe = fb.onSnapshot(roomRef, (snap) => {
                     if (snap.exists()) {
@@ -365,11 +365,11 @@
                     }
                 }, (err) => console.error("Snapshot Error:", err));
                 return () => unsubscribe();
-            }, [roomId, user, fb]);
+            }, [roomId, user, fb, appId]);
 
             const changeSize = async (size) => {
                 const emptyGrid = Array(size * size).fill(null);
-                if (roomId && user && user.uid === owner) {
+                if (roomId && user && user.uid === owner && fb) {
                     const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
                     await fb.updateDoc(roomRef, { gridSize: size, grid: emptyGrid });
                 } else if (!roomId) {
@@ -398,13 +398,14 @@
             };
 
             const selectAnime = async (anime) => {
+                if (activeCell === null) return;
                 const newGrid = [...grid];
                 newGrid[activeCell] = { 
                     title: anime.title.english || anime.title.romaji, 
                     image: anime.coverImage.large, 
                     by: playerName || 'Player' 
                 };
-                if (roomId && user) {
+                if (roomId && user && fb) {
                     const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
                     await fb.updateDoc(roomRef, { grid: newGrid });
                 } else { 
@@ -460,7 +461,7 @@
 
                     <div className="bg-[#262626] p-4 md:p-10 rounded-[3rem] shadow-2xl w-full max-w-4xl overflow-x-auto custom-scrollbar border border-white/5">
                         <div className={`grid ${gridCols} gap-3 md:gap-5 min-w-[600px]`}>
-                            {/* ช่องซ้ายบนปล่อยว่างตามรูป */}
+                            {/* ช่องซ้ายบนปล่อยว่างตามดีไซน์ล่าสุด */}
                             <div className="aspect-square flex items-center justify-center">
                                 <div className="w-full h-full bg-transparent"></div>
                             </div>
@@ -510,7 +511,6 @@
                         Reset Grid Data
                     </button>
 
-                    {/* Search Modal */}
                     {activeCell !== null && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
                             <div className="w-full max-w-xl bg-[#262626] rounded-[2.5rem] overflow-hidden flex flex-col max-h-[85vh] shadow-2xl border border-white/5 animate-slide-up">
