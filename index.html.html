@@ -31,12 +31,22 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        const firebaseConfig = {
+            apiKey: "AIzaSyDy3A8XwrKA-BXjlueZzzTa5BQ1R1SFVzk",
+            authDomain: "game-hub-jetabait.firebaseapp.com",
+            projectId: "game-hub-jetabait",
+            storageBucket: "game-hub-jetabait.firebasestorage.app",
+            messagingSenderId: "788930921640",
+            appId: "1:788930921640:web:f54c7d47012b4f50a0ee9d",
+            measurementId: "G-TL5GQ6BX61"
+        };
 
-        window.FirebaseSDK = { auth, db, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, signInAnonymously, signInWithCustomToken, onAuthStateChanged, arrayUnion };
+        try {
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            window.FirebaseSDK = { auth, db, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, signInAnonymously, signInWithCustomToken, onAuthStateChanged, arrayUnion };
+        } catch (e) { console.error("Firebase Error", e); }
     </script>
 
     <script type="text/babel">
@@ -87,18 +97,22 @@
                         clearInterval(check);
                         const sdk = window.FirebaseSDK;
                         setFb(sdk);
-                        const initAuth = async () => {
-                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                                try { await sdk.signInWithCustomToken(sdk.auth, __initial_auth_token); } catch(e) { await sdk.signInAnonymously(sdk.auth); }
-                            } else { await sdk.signInAnonymously(sdk.auth); }
+                        const handleAuth = async () => {
+                            sdk.onAuthStateChanged(sdk.auth, (u) => { if (u) setUser(u); });
+                            try {
+                                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                    await sdk.signInWithCustomToken(sdk.auth, __initial_auth_token);
+                                } else {
+                                    await sdk.signInAnonymously(sdk.auth);
+                                }
+                            } catch (e) { try { await sdk.signInAnonymously(sdk.auth); } catch(err) {} }
                         };
-                        initAuth();
-                        sdk.onAuthStateChanged(sdk.auth, (u) => { if(u) setUser(u); });
+                        handleAuth();
                     }
                 }, 100);
             }, []);
 
-            if (!user) return <div className="min-h-screen flex items-center justify-center text-indigo-400 font-bold animate-pulse text-lg">กำลังเชื่อมต่อ...</div>;
+            if (!user) return <div className="min-h-screen flex flex-col items-center justify-center text-indigo-400 font-bold animate-pulse text-lg">กำลังเชื่อมต่อ...</div>;
 
             return (
                 <div className="min-h-screen flex flex-col">
@@ -108,12 +122,12 @@
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl">
                                 <button onClick={() => {setGameType('bingo'); setScreen('lobby');}} className="bg-[#262626] p-10 rounded-[2.5rem] border border-white/5 hover:border-indigo-500/30 transition-all text-left group shadow-xl">
                                     <Icon name="grid" size={40} className="text-indigo-400 mb-6" />
-                                    <h3 className="text-2xl font-bold mb-2">Anime Grid Bingo</h3>
+                                    <h3 className="text-2xl font-bold mb-2 text-white">Anime Grid Bingo</h3>
                                     <p className="text-neutral-500 font-medium">บิงโกสุ่มหมวดหมู่ แข่งกันเรียง 3 ช่อง</p>
                                 </button>
                                 <button onClick={() => {setGameType('yesno'); setScreen('lobby');}} className="bg-[#262626] p-10 rounded-[2.5rem] border border-white/5 hover:border-pink-500/30 transition-all text-left group shadow-xl">
                                     <Icon name="help" size={40} className="text-pink-400 mb-6" />
-                                    <h3 className="text-2xl font-bold mb-2">ใช่หรือไม่? (Guessing)</h3>
+                                    <h3 className="text-2xl font-bold mb-2 text-white">ใช่หรือไม่? (Guessing)</h3>
                                     <p className="text-neutral-500 font-medium">ตั้งชื่อลับแล้วทายกันเองทางหน้าจอ</p>
                                 </button>
                             </div>
@@ -136,8 +150,7 @@
                     await fb.setDoc(roomRef, {
                         gameType, owner: user.uid, players: { [user.uid]: playerName }, playerOrder: [user.uid],
                         grid: Array(9).fill(null), gridSize: 3, topCats: shuffleAndPick(CAT_PHYSICAL, 5), leftCats: shuffleAndPick(CAT_TRAITS, 5),
-                        turnUid: user.uid, winnerUid: null,
-                        secrets: {}, reveals: {}, createdAt: new Date().toISOString()
+                        turnUid: user.uid, winnerUid: null, secrets: {}, reveals: {}, createdAt: new Date().toISOString()
                     });
                     onJoin(id);
                 } else {
@@ -145,20 +158,20 @@
                     if (snap.exists()) {
                         await fb.updateDoc(roomRef, { [`players.${user.uid}`]: playerName, playerOrder: fb.arrayUnion(user.uid) });
                         onJoin(id);
-                    }
+                    } else { alert("ไม่พบรหัสห้องที่ระบุ"); }
                 }
             };
             return (
                 <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up">
                     <div className="w-full max-w-md bg-[#262626] p-10 rounded-[2.5rem] border border-white/5 shadow-2xl">
                         <button onClick={onBack} className="text-neutral-500 mb-6 flex items-center font-bold text-sm hover:text-white transition-colors"><Icon name="back" size={16} className="mr-2" /> กลับ</button>
-                        <h2 className="text-3xl font-black mb-8 text-center text-gradient">{gameType === 'bingo' ? 'Bingo Lobby' : 'Guessing Lobby'}</h2>
+                        <h2 className="text-3xl font-black mb-8 text-center text-gradient uppercase">{gameType} Room</h2>
                         <div className="space-y-6">
-                            <input value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-4 text-white font-bold" placeholder="ชื่อเล่นของคุณ" />
+                            <input value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-4 text-white font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/30" placeholder="ชื่อเล่นของคุณ" />
                             <button onClick={() => handleAction(true)} className="w-full btn-primary py-4 rounded-2xl font-bold shadow-lg">สร้างห้องใหม่</button>
                             <div className="flex gap-2">
-                                <input value={roomCode} onChange={e => setRoomCode(e.target.value)} className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-4 text-white font-mono uppercase" placeholder="รหัสห้อง" />
-                                <button onClick={() => handleAction(false)} className="bg-[#333] px-6 rounded-2xl font-bold">เข้าร่วม</button>
+                                <input value={roomCode} onChange={e => setRoomCode(e.target.value)} className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-4 text-white font-mono uppercase focus:outline-none" placeholder="รหัสห้อง" />
+                                <button onClick={() => handleAction(false)} className="bg-[#333] px-6 rounded-2xl font-bold transition-all">เข้าร่วม</button>
                             </div>
                         </div>
                     </div>
@@ -235,14 +248,13 @@
             };
 
             const isTurn = user.uid === turnUid;
-            const gridCols = `grid-cols-${gridSize+1}`;
 
             return (
                 <div className="flex-1 p-6 flex flex-col items-center animate-slide-up">
                     <div className="w-full max-w-5xl flex justify-between items-center mb-8">
                         <button onClick={onBack} className="text-neutral-500 font-bold flex items-center hover:text-white transition-colors"><Icon name="back" className="mr-2" /> ออก</button>
                         <div className="flex gap-4">
-                            <div className={`px-6 py-3 rounded-2xl border font-bold transition-all ${isTurn && !winnerUid ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-[#262626] text-neutral-500 border-white/5'}`}>
+                            <div className={`px-6 py-3 rounded-2xl border font-bold transition-all ${isTurn && !winnerUid ? 'bg-indigo-600 text-white shadow-lg' : 'bg-[#262626] text-neutral-500 border-white/5'}`}>
                                 {isTurn ? 'ตาของคุณ' : `ตาของ ${players[turnUid]}`}
                             </div>
                             <div className="bg-indigo-600/20 px-6 py-3 rounded-2xl font-mono text-indigo-400 font-bold tracking-widest border border-indigo-500/20 shadow-inner">ROOM: {roomId}</div>
@@ -250,7 +262,7 @@
                     </div>
 
                     <div className="bg-[#262626] p-8 rounded-[3rem] border border-white/5 w-full max-w-4xl overflow-x-auto shadow-2xl">
-                        <div className={`grid ${gridCols} gap-4 min-w-[600px]`}>
+                        <div className={`grid grid-cols-${gridSize+1} gap-4 min-w-[600px]`}>
                             <div className="aspect-square"></div>
                             {topCats.slice(0, gridSize).map((c, i) => <div key={i} className="aspect-square bg-indigo-900/20 rounded-2xl flex items-center justify-center p-3 text-center font-black text-indigo-300 text-xl leading-tight border border-indigo-500/10 shadow-inner">{c}</div>)}
                             {leftCats.slice(0, gridSize).map((lc, r) => (
@@ -376,7 +388,7 @@
 
             if (!roomData) return null;
 
-            const mySecret = roomData.secrets[user.uid];
+            const mySecret = roomData.secrets?.[user.uid];
             const myRevealed = roomData.reveals?.[user.uid] || false;
 
             return (
@@ -393,9 +405,7 @@
                                 {mySecret ? (
                                     <div className="w-full space-y-6">
                                         <div className="bg-indigo-500/10 border-2 border-indigo-500/30 p-8 rounded-[2rem] w-full animate-slide-up shadow-inner relative">
-                                            {mySecret.image && (
-                                                <img src={mySecret.image} className="w-24 h-32 object-cover rounded-2xl mx-auto mb-4 shadow-lg border border-indigo-500/30" />
-                                            )}
+                                            {mySecret.image && <img src={mySecret.image} className="w-24 h-32 object-cover rounded-2xl mx-auto mb-4 border border-indigo-500/30" />}
                                             <p className="text-4xl font-black text-indigo-400 mb-2">{mySecret.title}</p>
                                             <p className="text-xs text-neutral-500 font-bold italic">ความลับที่คุณตั้งไว้</p>
                                             {myRevealed && <div className="absolute -top-3 -right-3 bg-green-500 text-black text-[10px] font-black px-3 py-1 rounded-full shadow-lg">REVEALED</div>}
@@ -419,7 +429,7 @@
                                 <div className="space-y-4 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
                                     {Object.entries(roomData.players).map(([uid, name]) => {
                                         const isOtherRevealed = roomData.reveals?.[uid] || false;
-                                        const otherSecret = roomData.secrets[uid];
+                                        const otherSecret = roomData.secrets?.[uid];
                                         return (
                                             <div key={uid} className={`flex flex-col p-5 rounded-2xl transition-all ${otherSecret ? 'bg-indigo-500/5 border border-indigo-500/20' : 'bg-[#1a1a1a] border border-white/5'}`}>
                                                 <div className="flex items-center justify-between">
@@ -432,9 +442,7 @@
                                                 {isOtherRevealed && otherSecret && (
                                                     <div className="mt-4 pt-4 border-t border-white/5 text-center animate-slide-up flex flex-col items-center">
                                                         <p className="text-neutral-500 text-[10px] font-black uppercase mb-3">เฉลยคือ</p>
-                                                        {otherSecret.image && (
-                                                            <img src={otherSecret.image} className="w-20 h-28 object-cover rounded-xl mb-3 shadow-md border border-pink-500/20" />
-                                                        )}
+                                                        {otherSecret.image && <img src={otherSecret.image} className="w-20 h-28 object-cover rounded-xl mb-3 border border-pink-500/20" />}
                                                         <p className="text-2xl font-black text-white">{otherSecret.title}</p>
                                                     </div>
                                                 )}
@@ -503,8 +511,12 @@
             );
         }
 
-        const root = document.getElementById('root');
-        ReactDOM.createRoot(root).render(<App />);
+        const startApp = () => {
+            const root = document.getElementById('root');
+            if (root && window.ReactDOM && window.React) window.ReactDOM.createRoot(root).render(<App />);
+            else setTimeout(startApp, 50);
+        };
+        startApp();
     </script>
 </body>
 </html>
