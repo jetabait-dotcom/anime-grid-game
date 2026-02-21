@@ -1,607 +1,568 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { initializeApp, getApps } from 'firebase/app';
-import { 
-  getAuth, 
-  signInAnonymously, 
-  signInWithCustomToken, 
-  onAuthStateChanged 
-} from 'firebase/auth';
-import { 
-  getFirestore, 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc, 
-  onSnapshot, 
-  collection 
-} from 'firebase/firestore';
-import { 
-  Gamepad2, 
-  LayoutGrid, 
-  ChevronLeft, 
-  Users, 
-  User, 
-  Search, 
-  X, 
-  Check, 
-  Smile, 
-  PlayCircle, 
-  Sparkles,
-  RefreshCw,
-  Trophy,
-  AlertCircle
-} from 'lucide-react';
-
-// --- Safe Firebase Config Initialization ---
-// พี่ใส่ค่าจากรูปภาพที่น้องส่งมาให้แล้วนะน้องนะ
-const getFirebaseConfig = () => {
-  try {
-    if (typeof __firebase_config !== 'undefined') {
-      return JSON.parse(__firebase_config);
-    }
-  } catch (e) {
-    console.warn("Global config not found, using provided fallback");
-  }
-  
-  // ข้อมูลจากรูปภาพของน้อง (game-hub-jetabait)
-  return {
-    apiKey: "AIzaSyDy3A8XwrKA-BXjlueZzzTa5BQ1R1SFVzk",
-    authDomain: "game-hub-jetabait.firebaseapp.com",
-    projectId: "game-hub-jetabait",
-    storageBucket: "game-hub-jetabait.firebasestorage.app",
-    messagingSenderId: "788930921640",
-    appId: "1:788930921640:web:f54c7d47012b4f50a0ee9d"
-  };
-};
-
-const firebaseConfig = getFirebaseConfig();
-// ใช้ Project ID เป็น appId สำหรับ Path ของ Firestore
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'game-hub-jetabait';
-
-// Initialize Firebase
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-// --- Constants ---
-const CATEGORIES = {
-  top: ["K-On! / Kyoto Animation", "Umamusume / หูสัตว์", "ดัดแปลงจากมังฮวา", "เวทมนตร์/แฟนตาซี", "หุ่นยนต์/ไซไฟ", "ดราม่า/ปวดตับ"],
-  left: ["ชีวิตในโรงเรียน", "ดนตรี/ไอดอล", "กีฬา/การแข่งขัน", "แอคชัน/ผจญภัย", "ตลก/คอเมดี้", "สืบสวน/ระทึกขวัญ"]
-};
-
-// --- Helper Functions ---
-const fetchGemini = async (prompt, systemInstruction) => {
-  const apiKey = ""; // API Key handles by environment
-  let delay = 1000;
-  for (let i = 0; i < 5; i++) {
-    try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          systemInstruction: { parts: [{ text: systemInstruction }] }
-        })
-      });
-      if (!response.ok) throw new Error('API Error');
-      const data = await response.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    } catch (e) {
-      if (i === 4) throw e;
-      await new Promise(r => setTimeout(r, delay));
-      delay *= 2;
-    }
-  }
-};
-
-export default function App() {
-  const [screen, setScreen] = useState('hub');
-  const [user, setUser] = useState(null);
-  const [roomId, setRoomId] = useState('');
-  const [playerName, setPlayerName] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('anime_player_name') || '';
-    }
-    return '';
-  });
-  const [configError, setConfigError] = useState(false);
-
-  // Auth Initialization
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime Game Hub - Multiplayer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700;800&display=swap');
+        body { 
+            background-color: #171717; 
+            color: #f5f5f5; 
+            font-family: 'Anuphan', sans-serif; 
+            margin: 0;
+            overflow-x: hidden;
         }
-      } catch (err) {
-        console.error("Auth Error:", err);
-        if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-          setConfigError(true);
+        .bg-main { background-color: #171717; }
+        .text-gradient {
+            background: linear-gradient(to right, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-      }
-    };
-    initAuth();
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
+        .btn-primary { background-color: #4f46e5; transition: all 0.2s; }
+        .btn-primary:hover { background-color: #4338ca; transform: translateY(-1px); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slide-up { animation: slideUp 0.4s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-main">
+    <div id="root"></div>
 
-  useEffect(() => {
-    if (playerName && typeof window !== 'undefined') {
-      localStorage.setItem('anime_player_name', playerName);
-    }
-  }, [playerName]);
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-  if (configError) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a0a] p-6 text-center">
-        <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-        <h1 className="text-2xl font-bold mb-2 text-white">การเชื่อมต่อฐานข้อมูลผิดพลาดนะน้องนะ</h1>
-        <p className="text-neutral-500 max-w-md">
-          ตรวจสอบว่าค่า Firebase Config ในโค้ดถูกต้องตรงกับใน Console หรือไม่
-        </p>
-      </div>
-    );
-  }
+        const firebaseConfig = JSON.parse(__firebase_config);
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a0a] text-indigo-400">
-        <RefreshCw className="w-10 h-10 animate-spin mb-4" />
-        <p className="font-bold tracking-widest animate-pulse uppercase text-sm">Initializing Hub Experience...</p>
-      </div>
-    );
-  }
+        try {
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
 
-  const renderScreen = () => {
-    switch(screen) {
-      case 'hub': 
-        return <Hub onSelect={() => setScreen('menu')} />;
-      case 'menu': 
-        return <Menu onLocal={() => { setRoomId(''); setScreen('game'); }} onMulti={() => setScreen('lobby')} onBack={() => setScreen('hub')} />;
-      case 'lobby': 
-        return <Lobby onBack={() => setScreen('menu')} onJoin={(id) => { setRoomId(id); setScreen('game'); }} user={user} playerName={playerName} setPlayerName={setPlayerName} />;
-      case 'game': 
-        return <Game roomId={roomId} onBack={() => setScreen('menu')} user={user} playerName={playerName} />;
-      default: 
-        return <Hub onSelect={() => setScreen('menu')} />;
-    }
-  };
+            window.FirebaseSDK = { 
+                auth, db, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, 
+                signInAnonymously, signInWithCustomToken, onAuthStateChanged 
+            };
+        } catch (e) {
+            console.error("Firebase Init Error:", e);
+        }
+    </script>
 
-  return (
-    <div className="min-h-screen bg-[#0a0a0a] text-neutral-100 font-sans selection:bg-indigo-500/30">
-      {renderScreen()}
-    </div>
-  );
-}
+    <script type="text/babel">
+        const React = window.React;
+        const ReactDOM = window.ReactDOM;
+        const { useState, useEffect, useRef } = React;
 
-// --- Hub Screen ---
-function Hub({ onSelect }) {
-  return (
-    <div className="flex-1 min-h-screen flex flex-col items-center justify-center p-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="w-20 h-20 bg-indigo-600/10 rounded-3xl flex items-center justify-center mb-8 border border-indigo-500/20 shadow-2xl shadow-indigo-500/10">
-        <Gamepad2 className="w-10 h-10 text-indigo-400" />
-      </div>
-      <h1 className="text-7xl font-black mb-4 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tighter">
-        Game Hub
-      </h1>
-      <p className="text-neutral-500 mb-12 text-center max-w-sm font-medium tracking-tight">
-        ศูนย์รวมมินิเกมสายอนิเมะและมังฮวาที่น้องรัก
-      </p>
-      <button 
-        onClick={onSelect} 
-        className="w-full max-w-sm bg-[#111] p-10 rounded-[3rem] border border-white/5 hover:border-indigo-500/40 transition-all text-left group shadow-2xl relative overflow-hidden"
-      >
-        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/5 blur-3xl -mr-16 -mt-16 group-hover:bg-indigo-600/10 transition-colors"></div>
-        <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-          <LayoutGrid className="w-7 h-7 text-indigo-400" />
-        </div>
-        <h3 className="text-3xl font-black mb-2 text-white tracking-tight">Anime Grid</h3>
-        <p className="text-neutral-500 text-base font-medium leading-relaxed">เติมชื่ออนิเมะ/ตัวละครลงตารางบิงโก</p>
-      </button>
-    </div>
-  );
-}
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const icons = {
+                gamepad: <path d="M6 12h4m-2-2v4m7-1h.01m2.99-2h.01M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/>,
+                grid: <path d="M3 3h7v7H3V3Zm11 0h7v7h-7V3ZM3 14h7v7H3v-7Zm11 0h7v7h-7v-7Z"/>,
+                back: <path d="m15 18-6-6 6-6"/>,
+                users: <React.Fragment><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></React.Fragment>,
+                user: <React.Fragment><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></React.Fragment>,
+                search: <React.Fragment><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></React.Fragment>,
+                close: <path d="M18 6 6 18M6 6l12 12"/>,
+                check: <path d="M20 6 9 17l-5-5"/>,
+                userCircle: <React.Fragment><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></React.Fragment>,
+                playCircle: <React.Fragment><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></React.Fragment>,
+                sparkles: <path d="m12 3 1.912 5.885L20 10.8l-5.088 1.915L12 18.6l-1.912-5.885L5 10.8l5.088-1.915L12 3Z"/>
+            };
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name]}
+                </svg>
+            );
+        };
 
-// --- Menu Screen ---
-function Menu({ onLocal, onMulti, onBack }) {
-  return (
-    <div className="flex-1 min-h-screen flex flex-col items-center justify-center p-6 animate-in zoom-in-95 duration-500">
-      <h1 className="text-6xl font-black tracking-tighter text-white mb-2">Anime Grid</h1>
-      <p className="text-neutral-400 text-lg mb-12 font-medium">เลือกโหมดการเล่นที่ต้องการนะน้องนะ</p>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
-        <button onClick={onLocal} className="bg-[#111] hover:bg-[#161616] p-12 rounded-[2.5rem] border border-white/5 transition-all group flex flex-col items-center text-center shadow-xl">
-          <User className="w-12 h-12 text-emerald-400 mb-6 group-hover:scale-110 transition-transform" />
-          <h3 className="text-2xl font-bold mb-2 text-white">เล่นคนเดียว</h3>
-          <p className="text-neutral-500 text-sm">ฝึกฝนความจำคนเดียวแบบชิลๆ</p>
-        </button>
-        
-        <button onClick={onMulti} className="bg-indigo-950/20 hover:bg-indigo-950/30 p-12 rounded-[2.5rem] border border-indigo-500/20 transition-all group flex flex-col items-center text-center shadow-xl">
-          <Users className="w-12 h-12 text-indigo-400 mb-6 group-hover:scale-110 transition-transform" />
-          <h3 className="text-2xl font-bold mb-2 text-white">เล่นกับเพื่อน (Multiplayer)</h3>
-          <p className="text-neutral-500 text-sm">สร้างห้องและเติมตารางไปพร้อมกับเพื่อน</p>
-        </button>
-      </div>
+        const CATEGORIES = {
+            top: ["แนวเพลงดนตรี", "เกียวโตแอนิเมชัน", "ดัดแปลงจากมังฮวา", "เวทมนตร์/แฟนตาซี", "หุ่นยนต์/ไซไฟ", "ดราม่า/ปวดตับ"],
+            left: ["ชีวิตในโรงเรียน", "มีหูสัตว์/หางสัตว์", "กีฬา/การแข่งขัน", "แอคชัน/ผจญภัย", "ตลก/คอเมดี้", "สืบสวน/ระทึกขวัญ"]
+        };
 
-      <button onClick={onBack} className="mt-12 text-neutral-600 hover:text-white transition-colors flex items-center font-bold gap-2">
-        <ChevronLeft size={20} /> กลับไปหน้าหลัก
-      </button>
-    </div>
-  );
-}
+        function App() {
+            const [screen, setScreen] = useState('hub');
+            const [user, setUser] = useState(null);
+            const [fbServices, setFbServices] = useState(null);
+            const [roomId, setRoomId] = useState('');
+            const [playerName, setPlayerName] = useState(localStorage.getItem('anime_player_name') || '');
+            const [isReady, setIsReady] = useState(false);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'game-hub-jetabait';
 
-// --- Lobby Screen ---
-function Lobby({ onBack, onJoin, user, playerName, setPlayerName }) {
-  const [roomCode, setRoomCode] = useState('');
-  const [loading, setLoading] = useState(false);
+            useEffect(() => {
+                const init = async () => {
+                    const checkSDK = setInterval(async () => {
+                        if (window.FirebaseSDK) {
+                            clearInterval(checkSDK);
+                            const sdk = window.FirebaseSDK;
+                            try {
+                                const auth = sdk.auth;
+                                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                    await sdk.signInWithCustomToken(auth, __initial_auth_token);
+                                } else {
+                                    await sdk.signInAnonymously(auth);
+                                }
+                                sdk.onAuthStateChanged(auth, (u) => {
+                                    if (u) {
+                                        setUser(u);
+                                        setFbServices(sdk);
+                                        setIsReady(true);
+                                    }
+                                });
+                            } catch (e) { console.error(e); }
+                        }
+                    }, 100);
+                };
+                init();
+            }, []);
 
-  const handleCreate = async () => {
-    if (!playerName.trim()) return;
-    setLoading(true);
-    const id = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', id);
-    try {
-      await setDoc(roomRef, {
-        grid: Array(9).fill(null),
-        gridSize: 3,
-        owner: user.uid,
-        players: { [user.uid]: playerName },
-        createdAt: new Date().toISOString()
-      });
-      onJoin(id);
-    } catch (e) { console.error(e); setLoading(false); }
-  };
+            useEffect(() => {
+                if (playerName) localStorage.setItem('anime_player_name', playerName);
+            }, [playerName]);
 
-  const handleJoin = async () => {
-    if (!roomCode.trim() || !playerName.trim()) return;
-    setLoading(true);
-    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode.toUpperCase());
-    try {
-      const snap = await getDoc(roomRef);
-      if (snap.exists()) {
-        await updateDoc(roomRef, { [`players.${user.uid}`]: playerName });
-        onJoin(roomCode.toUpperCase());
-      } else {
-        setLoading(false);
-      }
-    } catch (e) { console.error(e); setLoading(false); }
-  };
-
-  return (
-    <div className="flex-1 min-h-screen flex flex-col items-center justify-center p-6 bg-[#0a0a0a]">
-      <div className="w-full max-w-md animate-in slide-in-from-bottom-8 duration-500">
-        <button onClick={onBack} className="text-neutral-500 hover:text-white mb-8 flex items-center font-bold gap-2">
-          <ChevronLeft size={18} /> กลับ
-        </button>
-        
-        <div className="bg-[#111] p-10 rounded-[3rem] border border-white/5 shadow-2xl">
-          <h2 className="text-3xl font-black mb-8 text-center tracking-tight">สร้างหรือเข้าร่วมห้อง</h2>
-          
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest ml-2">ชื่อของน้อง</label>
-              <input 
-                value={playerName} 
-                onChange={e => setPlayerName(e.target.value)} 
-                className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-6 py-4 focus:ring-2 focus:ring-indigo-500/20 outline-none text-white font-bold"
-                placeholder="ใส่ชื่อเล่น..."
-              />
-            </div>
-
-            <button 
-              onClick={handleCreate} 
-              disabled={loading || !playerName} 
-              className="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-2xl font-black text-lg shadow-xl shadow-indigo-600/10 transition-all disabled:opacity-50"
-            >
-              {loading ? 'กำลังสร้างห้อง...' : 'สร้างห้องใหม่'}
-            </button>
-
-            <div className="relative py-4 flex items-center justify-center">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
-              <span className="relative px-4 bg-[#111] text-neutral-600 text-[10px] font-black uppercase tracking-[0.3em]">หรือ</span>
-            </div>
-
-            <div className="flex gap-2">
-              <input 
-                value={roomCode} 
-                onChange={e => setRoomCode(e.target.value.toUpperCase())} 
-                className="flex-1 bg-[#0a0a0a] border border-white/10 rounded-2xl px-6 py-4 font-mono text-center text-xl tracking-[0.5em] outline-none focus:border-indigo-500/30 transition-colors"
-                placeholder="รหัส"
-                maxLength={4}
-              />
-              <button 
-                onClick={handleJoin} 
-                disabled={loading || !playerName || !roomCode} 
-                className="bg-neutral-800 hover:bg-neutral-700 px-6 rounded-2xl font-bold transition-all"
-              >
-                เข้า
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// --- Game Screen ---
-function Game({ roomId, onBack, user, playerName }) {
-  const [gridSize, setGridSize] = useState(3);
-  const [grid, setGrid] = useState(Array(9).fill(null));
-  const [players, setPlayers] = useState({});
-  const [owner, setOwner] = useState('');
-  const [activeCell, setActiveCell] = useState(null);
-  const [search, setSearch] = useState('');
-  const [searchType, setSearchType] = useState('anime'); 
-  const [results, setResults] = useState([]);
-  const [searching, setSearching] = useState(false);
-  const [isAITranslating, setIsAITranslating] = useState(false);
-  
-  useEffect(() => {
-    if (!roomId) return;
-    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-    const unsubscribe = onSnapshot(roomRef, (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        setGrid(data.grid || Array((data.gridSize || 3) ** 2).fill(null));
-        setGridSize(data.gridSize || 3);
-        setPlayers(data.players || {});
-        setOwner(data.owner || '');
-      }
-    }, (err) => console.error("Firestore Listen Error:", err));
-    return () => unsubscribe();
-  }, [roomId]);
-
-  const handleSearch = async (val) => {
-    setSearch(val);
-    if (val.trim().length < 2) {
-      setResults([]);
-      return;
-    }
-
-    setSearching(true);
-    let finalQuery = val;
-
-    if (/[\u0E00-\u0E7F]/.test(val)) {
-      setIsAITranslating(true);
-      try {
-        const translated = await fetchGemini(
-          val, 
-          "Translate the following anime title or character name from Thai to English (Official or Romaji). Return ONLY the translated string. Example: 'เค-อง' -> 'K-On!'"
-        );
-        finalQuery = translated || val;
-      } catch (e) {
-        console.error("AI Translation Error", e);
-      }
-      setIsAITranslating(false);
-    }
-
-    const query = searchType === 'anime' 
-      ? `query ($s: String) { Page(perPage: 9) { media(search: $s, type: ANIME, sort: POPULARITY_DESC) { id title { romaji english } coverImage { large } } } }`
-      : `query ($s: String) { Page(perPage: 9) { characters(search: $s, sort: SEARCH_MATCH) { id name { full } image { large } } } }`;
-
-    try {
-      const response = await fetch('https://graphql.anilist.co', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, variables: { s: finalQuery } })
-      });
-      const data = await response.json();
-      const items = searchType === 'anime' 
-        ? (data.data?.Page?.media || []).map(m => ({ id: m.id, title: m.title.romaji || m.title.english, image: m.coverImage.large }))
-        : (data.data?.Page?.characters || []).map(c => ({ id: c.id, title: c.name.full, image: c.image.large }));
-      setResults(items);
-    } catch (e) { console.error("Search API Error:", e); }
-    setSearching(false);
-  };
-
-  const selectItem = async (item) => {
-    const newGrid = [...grid];
-    newGrid[activeCell] = { ...item, by: playerName };
-    if (roomId) {
-      const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-      try {
-        await updateDoc(roomRef, { grid: newGrid });
-      } catch (err) { console.error("Update Grid Error:", err); }
-    } else {
-      setGrid(newGrid);
-    }
-    setActiveCell(null);
-    setSearch('');
-    setResults([]);
-  };
-
-  const resetGrid = async () => {
-    const emptyGrid = Array(gridSize * gridSize).fill(null);
-    if (roomId && user.uid === owner) {
-      const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-      await updateDoc(roomRef, { grid: emptyGrid });
-    } else if (!roomId) {
-      setGrid(emptyGrid);
-    }
-  };
-
-  const changeSize = async (size) => {
-    const emptyGrid = Array(size * size).fill(null);
-    if (roomId && user.uid === owner) {
-      const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-      await updateDoc(roomRef, { gridSize: size, grid: emptyGrid });
-    } else if (!roomId) {
-      setGridSize(size);
-      setGrid(emptyGrid);
-    }
-  };
-
-  const isHost = !roomId || user.uid === owner;
-
-  return (
-    <div className="flex-1 flex flex-col p-4 md:p-10 max-w-7xl mx-auto w-full animate-in fade-in duration-1000">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-10">
-        <button onClick={onBack} className="text-neutral-500 hover:text-white flex items-center font-bold gap-2 transition-colors">
-          <ChevronLeft /> ย้อนกลับ
-        </button>
-        
-        <div className="flex items-center gap-4">
-          {roomId && (
-            <div className="flex items-center gap-3">
-              <div className="bg-[#111] px-4 py-2 rounded-xl border border-white/5 flex items-center gap-2">
-                <Users size={16} className="text-indigo-400" />
-                <span className="text-sm font-bold">{Object.values(players).join(', ')}</span>
-              </div>
-              <div className="bg-indigo-600/10 px-4 py-2 rounded-xl border border-indigo-500/20 text-indigo-400 font-mono font-black text-sm tracking-widest">
-                ID: {roomId}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="text-center mb-10">
-        <h2 className="text-5xl font-black mb-6 tracking-tighter">Anime Grid</h2>
-        
-        {isHost && (
-          <div className="inline-flex bg-[#111] p-1.5 rounded-2xl border border-white/5 shadow-xl">
-            {[3, 4, 5].map(s => (
-              <button 
-                key={s} 
-                onClick={() => changeSize(s)} 
-                className={`px-6 py-2 rounded-xl text-sm font-black transition-all ${gridSize === s ? 'bg-indigo-600 text-white shadow-lg' : 'text-neutral-500 hover:text-neutral-300'}`}
-              >
-                {s}x{s}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="bg-[#111] p-6 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/5 overflow-x-auto">
-        <div 
-          className="grid gap-4 min-w-[600px]" 
-          style={{ gridTemplateColumns: `repeat(${gridSize + 1}, minmax(0, 1fr))` }}
-        >
-          <div className="aspect-square flex items-center justify-center">
-            <Trophy className="text-neutral-800" size={32} />
-          </div>
-
-          {CATEGORIES.top.slice(0, gridSize).map((cat, i) => (
-            <div key={i} className="aspect-square bg-indigo-500/5 rounded-3xl flex items-center justify-center p-4 text-center text-[10px] md:text-xs font-black text-indigo-400 border border-indigo-500/10 uppercase tracking-tighter">
-              {cat}
-            </div>
-          ))}
-
-          {CATEGORIES.left.slice(0, gridSize).map((lCat, rowIdx) => (
-            <React.Fragment key={rowIdx}>
-              <div className="aspect-square bg-pink-500/5 rounded-3xl flex items-center justify-center p-4 text-center text-[10px] md:text-xs font-black text-pink-400 border border-pink-500/10 uppercase tracking-tighter">
-                {lCat}
-              </div>
-              
-              {Array.from({ length: gridSize }).map((_, colIdx) => {
-                const idx = rowIdx * gridSize + colIdx;
-                const cell = grid[idx];
+            if (!isReady) {
                 return (
-                  <button 
-                    key={idx} 
-                    onClick={() => setActiveCell(idx)}
-                    className="aspect-square bg-[#0a0a0a] hover:bg-[#111] transition-all rounded-3xl overflow-hidden relative border border-white/5 flex flex-col items-center justify-center group"
-                  >
-                    {cell ? (
-                      <div className="w-full h-full relative">
-                        <img src={cell.image} alt={cell.title} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent flex flex-col justify-end p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <p className="text-[10px] font-black leading-tight text-white line-clamp-2">{cell.title}</p>
-                          <p className="text-[8px] text-neutral-400 mt-1 uppercase tracking-widest">BY {cell.by}</p>
-                        </div>
-                        <div className="absolute top-2 right-2 bg-emerald-500 text-black p-1 rounded-full shadow-lg">
-                          <Check size={10} strokeWidth={4} />
-                        </div>
-                      </div>
-                    ) : (
-                      <Search className="text-neutral-800 group-hover:text-indigo-500/40 transition-colors" size={24} />
-                    )}
-                  </button>
+                    <div className="min-h-screen flex flex-col items-center justify-center bg-[#171717]">
+                        <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
+                        <div className="text-indigo-400 font-bold animate-pulse text-lg tracking-tight">กำลังเชื่อมต่อฐานข้อมูล...</div>
+                    </div>
                 );
-              })}
-            </React.Fragment>
-          ))}
-        </div>
-      </div>
+            }
 
-      <div className="mt-12 flex justify-center">
-        <button 
-          onClick={() => { if(window.confirm("ล้างตารางทั้งหมดนะน้องนะ?")) resetGrid(); }}
-          className="text-neutral-700 hover:text-red-400 transition-colors text-[10px] font-black uppercase tracking-[0.4em] px-8 py-3 rounded-2xl"
-        >
-          Reset Grid Data
-        </button>
-      </div>
+            return (
+                <div className="min-h-screen flex flex-col bg-[#171717]">
+                    {screen === 'hub' && <Hub onSelect={() => setScreen('menu')} />}
+                    {screen === 'menu' && (
+                        <Menu 
+                            onLocal={() => { setRoomId(''); setScreen('game'); }} 
+                            onMulti={() => setScreen('lobby')} 
+                            onBack={() => setScreen('hub')} 
+                        />
+                    )}
+                    {screen === 'lobby' && (
+                        <Lobby 
+                            fb={fbServices} 
+                            appId={appId}
+                            onBack={() => setScreen('menu')} 
+                            onJoin={(id) => { setRoomId(id); setScreen('game'); }} 
+                            user={user} 
+                            playerName={playerName} 
+                            setPlayerName={setPlayerName} 
+                        />
+                    )}
+                    {screen === 'game' && (
+                        <Game 
+                            fb={fbServices} 
+                            appId={appId} 
+                            roomId={roomId} 
+                            onBack={() => setScreen('menu')} 
+                            user={user} 
+                            playerName={playerName} 
+                        />
+                    )}
+                </div>
+            );
+        }
 
-      {activeCell !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-300">
-          <div className="w-full max-w-2xl bg-[#111] rounded-[3rem] overflow-hidden flex flex-col max-h-[85vh] shadow-2xl border border-white/10">
-            <div className="p-8 border-b border-white/5 flex justify-between items-center bg-[#161616]">
-              <h3 className="text-2xl font-black tracking-tight">เลือกอนิเมะหรือตัวละคร</h3>
-              <button onClick={() => setActiveCell(null)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-neutral-500">
-                <X size={28} />
-              </button>
-            </div>
-            
-            <div className="flex border-b border-white/5 bg-[#0a0a0a]">
-              <button 
-                onClick={() => setSearchType('anime')} 
-                className={`flex-1 py-5 flex items-center justify-center gap-2 text-sm font-black transition-all ${searchType === 'anime' ? 'text-indigo-400 bg-indigo-400/5 border-b-2 border-indigo-400' : 'text-neutral-500'}`}
-              >
-                <PlayCircle size={18} /> ANIME
-              </button>
-              <button 
-                onClick={() => setSearchType('character')} 
-                className={`flex-1 py-5 flex items-center justify-center gap-2 text-sm font-black transition-all ${searchType === 'character' ? 'text-pink-400 bg-pink-400/5 border-b-2 border-pink-400' : 'text-neutral-500'}`}
-              >
-                <Smile size={18} /> CHARACTER
-              </button>
-            </div>
-
-            <div className="p-8 flex-1 overflow-y-auto">
-              <div className="relative mb-8">
-                <input 
-                  autoFocus 
-                  value={search} 
-                  onChange={e => handleSearch(e.target.value)}
-                  className={`w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-6 py-4 focus:ring-4 outline-none transition-all text-lg font-bold ${searchType === 'anime' ? 'focus:ring-indigo-500/20' : 'focus:ring-pink-500/20'}`}
-                  placeholder={searchType === 'anime' ? "พิมพ์ชื่อเรื่องภาษาไทยหรืออังกฤษ..." : "พิมพ์ชื่อตัวละคร..."}
-                />
-                {isAITranslating && (
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[10px] font-black text-indigo-400 bg-indigo-400/10 px-3 py-1.5 rounded-full animate-pulse">
-                    <Sparkles size={12} /> AI TRANSLATING...
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-                {searching ? (
-                  <div className="col-span-full py-20 text-center text-neutral-600 font-black animate-pulse uppercase tracking-widest">Searching Hub...</div>
-                ) : results.length > 0 ? (
-                  results.map(item => (
-                    <button 
-                      key={item.id} 
-                      onClick={() => selectItem(item)}
-                      className="group text-left"
-                    >
-                      <div className="aspect-[3/4] rounded-2xl overflow-hidden mb-3 border border-white/5 group-hover:border-indigo-500/30 transition-all">
-                        <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                      </div>
-                      <p className="text-[10px] font-black text-neutral-400 group-hover:text-white transition-colors line-clamp-2 uppercase tracking-tighter leading-tight">{item.title}</p>
+        function Hub({ onSelect }) {
+            return (
+                <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up">
+                    <div className="w-16 h-16 bg-[#262626] rounded-2xl flex items-center justify-center mb-8 border border-white/5 shadow-xl">
+                        <Icon name="gamepad" size={32} className="text-indigo-400" />
+                    </div>
+                    <h1 className="text-6xl font-extrabold text-gradient mb-4 leading-tight tracking-tighter">Game Hub</h1>
+                    <p className="text-neutral-500 mb-12 text-center max-w-sm font-medium">ศูนย์รวมมินิเกมสายอนิเมะ</p>
+                    <button onClick={onSelect} className="w-full max-w-sm bg-[#262626] p-8 rounded-[2.5rem] border border-white/5 hover:border-indigo-500/30 transition-all text-left group shadow-lg">
+                        <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-indigo-500/20 transition-colors">
+                            <Icon name="grid" size={24} className="text-indigo-400" />
+                        </div>
+                        <h3 className="text-2xl font-extrabold mb-1 text-white">Anime Grid</h3>
+                        <p className="text-neutral-500 text-sm font-bold leading-relaxed">เติมชื่ออนิเมะลงตารางบิงโก</p>
                     </button>
-                  ))
-                ) : (
-                  <div className="col-span-full py-20 text-center text-neutral-800 font-black uppercase tracking-[0.2em]">No results found</div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+                </div>
+            );
+        }
+
+        function Menu({ onLocal, onMulti, onBack }) {
+            return (
+                <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up bg-[#171717]">
+                    <div className="w-20 h-20 bg-[#262626] rounded-[1.25rem] flex items-center justify-center mb-10 shadow-lg border border-white/5">
+                        <Icon name="grid" size={40} className="text-[#818cf8]" />
+                    </div>
+                    <div className="text-center mb-12">
+                        <h1 className="text-[5rem] font-extrabold tracking-tight text-gradient mb-4 leading-tight">Anime Grid</h1>
+                        <p className="text-neutral-400 text-lg font-medium">เกมเติมชื่ออนิเมะลงตารางบิงโก เลือกโหมดที่ต้องการเล่นได้เลย</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-[50rem] px-4">
+                        <button onClick={onLocal} className="bg-[#262626] hover:bg-[#2e2e2e] p-12 rounded-[2rem] border border-white/5 transition-all group flex flex-col items-center text-center shadow-xl">
+                            <div className="mb-6 flex items-center justify-center">
+                                <Icon name="user" size={42} className="text-[#4ade80] group-hover:scale-110 transition-transform" />
+                            </div>
+                            <h3 className="text-2xl font-bold mb-3 text-white">เล่นคนเดียว</h3>
+                            <p className="text-neutral-500 text-sm font-medium">เล่นชิลๆ คนเดียวในเครื่องนี้</p>
+                        </button>
+                        <button onClick={onMulti} className="bg-[#1e1b4b]/40 hover:bg-[#1e1b4b]/60 p-12 rounded-[2rem] border border-[#4338ca]/30 transition-all group flex flex-col items-center text-center shadow-xl">
+                            <div className="mb-6 flex items-center justify-center">
+                                <Icon name="users" size={42} className="text-[#818cf8] group-hover:scale-110 transition-transform" />
+                            </div>
+                            <h3 className="text-2xl font-bold mb-3 text-white">เล่นกับเพื่อน (ออนไลน์)</h3>
+                            <p className="text-neutral-400/50 text-sm font-medium max-w-[15rem]">สร้างห้องหรือใส่รหัสเพื่อเล่นตารางเดียวกันแบบเรียลไทม์</p>
+                        </button>
+                    </div>
+                    <button onClick={onBack} className="mt-16 text-neutral-600 hover:text-white transition-colors text-sm font-bold flex items-center">
+                        <Icon name="back" size={16} className="mr-2" /> กลับไปหน้าหลัก
+                    </button>
+                </div>
+            );
+        }
+
+        function Lobby({ fb, appId, onBack, onJoin, user, playerName, setPlayerName }) {
+            const [roomCode, setRoomCode] = useState('');
+            const [loading, setLoading] = useState(false);
+            
+            const handleCreate = async () => {
+                if (!playerName.trim() || !user || !fb) return;
+                setLoading(true);
+                const id = Math.random().toString(36).substring(2, 5).toUpperCase();
+                const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', id);
+                try {
+                    await fb.setDoc(roomRef, {
+                        grid: Array(9).fill(null),
+                        gridSize: 3,
+                        owner: user.uid,
+                        players: { [user.uid]: playerName },
+                        createdAt: new Date().toISOString()
+                    });
+                    onJoin(id);
+                } catch (e) { console.error(e); setLoading(false); }
+            };
+
+            const handleJoin = async () => {
+                if (!roomCode.trim() || !playerName.trim() || !user || !fb) return;
+                setLoading(true);
+                const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode.toUpperCase());
+                try {
+                    const snap = await fb.getDoc(roomRef);
+                    if (snap.exists()) {
+                        await fb.updateDoc(roomRef, { [`players.${user.uid}`]: playerName });
+                        onJoin(roomCode.toUpperCase());
+                    } else { 
+                        alert("ไม่พบรหัสห้องที่ระบุ"); 
+                        setLoading(false); 
+                    }
+                } catch (e) { console.error(e); setLoading(false); }
+            };
+
+            return (
+                <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up">
+                    <div className="w-full max-w-[32rem]">
+                        <button onClick={onBack} className="text-neutral-500 hover:text-white mb-8 flex items-center text-sm font-bold">
+                            <Icon name="back" size={16} className="mr-2" /> กลับหน้าเลือกโหมด
+                        </button>
+                        <div className="bg-[#262626] p-12 rounded-[2.5rem] shadow-2xl border border-white/5">
+                            <h2 className="text-[2rem] font-extrabold mb-10 text-center text-white tracking-tight">ระบบห้องเล่นด้วยกัน</h2>
+                            <div className="space-y-8">
+                                <div className="space-y-3">
+                                    <label className="text-sm font-medium text-neutral-400 px-1 tracking-tight">ชื่อของคุณ (แสดงในห้อง)</label>
+                                    <input value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white transition-all text-lg font-medium" placeholder="ใส่ชื่อของคุณ..." />
+                                </div>
+                                <button onClick={handleCreate} disabled={loading || !playerName} className="w-full btn-primary py-5 rounded-2xl font-extrabold text-xl disabled:opacity-50 text-white shadow-xl shadow-indigo-500/10 transition-all">
+                                    {loading ? 'กำลังประมวลผล...' : 'สร้างห้องใหม่'}
+                                </button>
+                                <div className="relative py-4 flex items-center justify-center"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div><span className="relative px-4 bg-[#262626] text-neutral-600 text-sm font-medium uppercase tracking-widest">หรือ</span></div>
+                                <div className="space-y-3">
+                                    <label className="text-sm font-medium text-neutral-400 px-1 tracking-tight">เข้าร่วมห้องเพื่อน</label>
+                                    <div className="flex gap-3">
+                                        <input value={roomCode} onChange={e => setRoomCode(e.target.value.toUpperCase())} className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 font-mono focus:outline-none text-white uppercase tracking-widest text-lg font-bold" placeholder="ใส่รหัสห้อง (เช่น KON)" />
+                                        <button onClick={handleJoin} disabled={loading || !playerName || !roomCode} className="bg-[#333333] hover:bg-[#3d3d3d] px-8 rounded-2xl font-bold text-lg text-[#737373] hover:text-white transition-all">เข้าห้อง</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function Game({ fb, appId, roomId, onBack, user, playerName }) {
+            const [gridSize, setGridSize] = useState(3);
+            const [grid, setGrid] = useState(Array(9).fill(null));
+            const [players, setPlayers] = useState({});
+            const [owner, setOwner] = useState('');
+            const [activeCell, setActiveCell] = useState(null);
+            const [search, setSearch] = useState('');
+            const [searchType, setSearchType] = useState('anime'); 
+            const [results, setResults] = useState([]);
+            const [searching, setSearching] = useState(false);
+            const [isAITranslating, setIsAITranslating] = useState(false);
+            const [showResetConfirm, setShowResetConfirm] = useState(false);
+            const searchTimerRef = useRef(null);
+
+            const apiKey = ""; // Runtime automatically provides this
+
+            useEffect(() => {
+                if (!roomId || !user || !fb) return;
+                const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+                const unsubscribe = fb.onSnapshot(roomRef, (snap) => {
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        setGrid(data.grid || Array((data.gridSize || 3) ** 2).fill(null));
+                        setGridSize(data.gridSize || 3);
+                        setPlayers(data.players || {});
+                        setOwner(data.owner || '');
+                    }
+                }, (err) => console.error("Firestore Error:", err));
+                return () => unsubscribe();
+            }, [roomId, user, fb, appId]);
+
+            useEffect(() => {
+                if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+                if (search.trim().length > 0) {
+                    searchTimerRef.current = setTimeout(() => {
+                        handleSearchFlow();
+                    }, 500);
+                } else {
+                    setResults([]);
+                    setIsAITranslating(false);
+                    setSearching(false);
+                }
+                return () => clearTimeout(searchTimerRef.current);
+            }, [search, searchType]);
+
+            // --- Gemini Translate System with Exponential Backoff ---
+            const translateName = async (thaiName) => {
+                const systemPrompt = "Translate Thai anime or character name to its official English or Romaji name. Return ONLY the translated name. If it is already in English, return as is. Example: หนวดดำ -> Blackbeard, มุกิ -> Tsumugi Kotobuki";
+                const delays = [1000, 2000, 4000, 8000, 16000];
+
+                for (let i = 0; i <= delays.length; i++) {
+                    try {
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: thaiName }] }],
+                                systemInstruction: { parts: [{ text: systemPrompt }] }
+                            })
+                        });
+                        
+                        if (!response.ok) throw new Error('API Error');
+                        const result = await response.json();
+                        return result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || thaiName;
+                    } catch (e) {
+                        if (i === delays.length) {
+                            console.error("Translation failed after retries.");
+                            return thaiName;
+                        }
+                        await new Promise(resolve => setTimeout(resolve, delays[i]));
+                    }
+                }
+            };
+
+            async function handleSearchFlow() {
+                const queryText = search.trim();
+                if (!queryText) return;
+
+                setSearching(true);
+                let finalQuery = queryText;
+
+                const isThai = /[\u0E00-\u0E7F]/.test(queryText);
+                if (isThai) {
+                    setIsAITranslating(true);
+                    finalQuery = await translateName(queryText);
+                    setIsAITranslating(false);
+                }
+
+                await executeAniListSearch(finalQuery);
+            }
+
+            async function executeAniListSearch(searchTerm) {
+                const animeQuery = `query ($s: String) { Page(perPage: 12) { media(search: $s, type: ANIME, sort: POPULARITY_DESC) { id title { romaji english } coverImage { large } } } }`;
+                const charQuery = `query ($s: String) { Page(perPage: 12) { characters(search: $s, sort: SEARCH_MATCH) { id name { full } image { large } } } }`;
+                
+                try {
+                    const res = await fetch('https://graphql.anilist.co', { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ 
+                            query: searchType === 'anime' ? animeQuery : charQuery, 
+                            variables: { s: searchTerm } 
+                        }) 
+                    });
+                    const data = await res.json();
+                    
+                    if (searchType === 'anime') {
+                        setResults(data.data?.Page?.media?.map(m => ({
+                            id: m.id,
+                            title: m.title.romaji || m.title.english,
+                            image: m.coverImage.large
+                        })) || []);
+                    } else {
+                        setResults(data.data?.Page?.characters?.map(c => ({
+                            id: c.id,
+                            title: c.name.full,
+                            image: c.image.large
+                        })) || []);
+                    }
+                } catch (e) { console.error(e); }
+                finally { setSearching(false); }
+            }
+
+            async function selectItem(item) {
+                if (activeCell === null) return;
+                const newGrid = [...grid];
+                newGrid[activeCell] = { title: item.title, image: item.image, by: playerName || 'Player' };
+                if (roomId && user && fb) {
+                    const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+                    await fb.updateDoc(roomRef, { grid: newGrid });
+                } else { setGrid(newGrid); }
+                setActiveCell(null); setSearch(''); setResults([]);
+            }
+
+            async function changeSize(size) {
+                const emptyGrid = Array(size * size).fill(null);
+                if (roomId && user && user.uid === owner && fb) {
+                    const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+                    await fb.updateDoc(roomRef, { gridSize: size, grid: emptyGrid });
+                } else if (!roomId) {
+                    setGridSize(size);
+                    setGrid(emptyGrid);
+                }
+                setShowResetConfirm(false);
+            }
+
+            const isHost = !roomId || (user && user.uid === owner);
+            const gridCols = { 3: 'grid-cols-4', 4: 'grid-cols-5', 5: 'grid-cols-6' }[gridSize];
+
+            return (
+                <div className="flex-1 p-4 md:p-8 flex flex-col items-center animate-slide-up">
+                    <div className="w-full max-w-5xl flex items-center justify-between gap-6 mb-10">
+                        <button onClick={onBack} className="text-neutral-500 hover:text-white flex items-center transition-colors text-lg font-bold">
+                            <Icon name="back" size={24} className="mr-2" /> ออก
+                        </button>
+                        {roomId && (
+                            <div className="flex items-center gap-4">
+                                <div className="bg-[#262626] border border-white/5 px-8 py-5 rounded-[2rem] text-2xl font-bold text-neutral-200 flex items-center shadow-2xl">
+                                    <Icon name="users" size={32} className="mr-4 text-indigo-400" />
+                                    {Object.values(players).join(', ')}
+                                </div>
+                                <div className="bg-indigo-600/20 border border-indigo-500/30 px-8 py-5 rounded-[2rem] text-2xl font-mono font-black text-indigo-400 shadow-indigo-500/10 shadow-2xl tracking-[0.2em]">
+                                    ROOM: {roomId}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="text-center mb-10">
+                        <h2 className="text-[3rem] font-extrabold text-white mb-6 tracking-tight">Anime Grid</h2>
+                        {isHost && (
+                            <div className="flex flex-col items-center gap-4 p-5 bg-[#262626]/40 rounded-[2.5rem] border border-white/5 shadow-inner">
+                                <div className="text-neutral-500 text-xs font-bold uppercase tracking-[0.3em]">เลือกขนาดตาราง</div>
+                                <div className="flex items-center justify-center gap-4">
+                                    {[3, 4, 5].map(s => (
+                                        <button key={s} onClick={() => changeSize(s)} className={`w-16 h-16 rounded-[1.25rem] text-lg font-bold transition-all shadow-md ${gridSize === s ? 'bg-indigo-600 text-white scale-110 shadow-indigo-500/30' : 'bg-[#262626] text-neutral-600 hover:text-neutral-300'}`}>
+                                            {s}x{s}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="bg-[#262626] p-4 md:p-12 rounded-[3.5rem] shadow-2xl w-full max-w-[65rem] overflow-x-auto custom-scrollbar border border-white/5">
+                        <div className={`grid ${gridCols} gap-4 md:gap-6 min-w-[700px]`}>
+                            <div className="aspect-square"></div>
+                            {CATEGORIES.top.slice(0, gridSize).map((cat, i) => (
+                                <div key={i} className="aspect-square bg-[#333545] rounded-[1.75rem] flex items-center justify-center p-4 text-center text-xs md:text-sm font-bold text-indigo-300 border border-indigo-500/10 shadow-inner">{cat}</div>
+                            ))}
+                            {CATEGORIES.left.slice(0, gridSize).map((lCat, rowIdx) => (
+                                <React.Fragment key={rowIdx}>
+                                    <div className="aspect-square bg-[#3d2e38] rounded-[1.75rem] flex items-center justify-center p-4 text-center text-xs md:text-sm font-bold text-pink-300 border border-pink-500/10 shadow-inner">{lCat}</div>
+                                    {Array.from({ length: gridSize }).map((_, colIdx) => {
+                                        const idx = rowIdx * gridSize + colIdx; const cell = grid[idx];
+                                        return (
+                                            <button key={idx} onClick={() => setActiveCell(idx)} className="aspect-square bg-[#1a1a1a] hover:bg-[#222] transition-all rounded-[1.75rem] overflow-hidden group relative border border-white/5 flex flex-col items-center justify-center shadow-inner">
+                                                {cell ? (
+                                                    <React.Fragment>
+                                                        <img src={cell.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent flex flex-col justify-end p-5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <p className="text-xs font-bold text-white leading-tight truncate">{cell.title}</p>
+                                                            <p className="text-[10px] text-neutral-500 mt-1 font-medium">โดย {cell.by}</p>
+                                                        </div>
+                                                        <div className="absolute top-3 right-3 bg-[#4ade80] text-black rounded-full p-1.5 shadow-lg"><Icon name="check" size={14} strokeWidth={4} /></div>
+                                                    </React.Fragment>
+                                                ) : <Icon name="search" size={28} className="text-neutral-800 group-hover:text-indigo-400/50 transition-colors" />}
+                                            </button>
+                                        );
+                                    })}
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {!showResetConfirm ? (
+                        <button onClick={() => setShowResetConfirm(true)} className="mt-16 text-neutral-700 hover:text-red-400 transition-colors text-xs font-bold uppercase tracking-[0.3em] px-8 py-3 rounded-2xl">Reset Grid Data</button>
+                    ) : (
+                        <div className="mt-16 flex items-center gap-6 animate-slide-up bg-[#262626] p-4 rounded-2xl border border-red-500/20 shadow-xl">
+                            <span className="text-red-400 text-xs font-bold uppercase tracking-widest">ยืนยันล้างกระดาน?</span>
+                            <button onClick={() => changeSize(gridSize)} className="text-white bg-red-600 px-6 py-2 rounded-xl text-xs font-bold shadow-lg shadow-red-600/20">ล้างทั้งหมด</button>
+                            <button onClick={() => setShowResetConfirm(false)} className="text-neutral-500 text-xs font-bold hover:text-white px-4 py-2 transition-colors">ยกเลิก</button>
+                        </div>
+                    )}
+                    
+                    {activeCell !== null && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
+                            <div className="w-full max-w-2xl bg-[#262626] rounded-[3rem] overflow-hidden flex flex-col max-h-[85vh] shadow-2xl border border-white/5 animate-slide-up">
+                                <div className="p-10 border-b border-white/5 flex justify-between items-center bg-[#2a2a2a]">
+                                    <h3 className="text-3xl font-bold text-white tracking-tight">เลือกรายการของคุณ</h3>
+                                    <button onClick={() => setActiveCell(null)} className="p-3 hover:bg-white/5 rounded-full transition-colors text-neutral-500"><Icon name="close" size={32} /></button>
+                                </div>
+                                <div className="flex border-b border-white/5 bg-[#1a1a1a]">
+                                    <button onClick={() => setSearchType('anime')} className={`flex-1 py-6 flex items-center justify-center gap-3 text-lg font-bold transition-all ${searchType === 'anime' ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-400/5' : 'text-neutral-500 hover:text-neutral-300'}`}><Icon name="playCircle" size={24} /> อนิเมะ</button>
+                                    <button onClick={() => setSearchType('character')} className={`flex-1 py-6 flex items-center justify-center gap-3 text-lg font-bold transition-all ${searchType === 'character' ? 'text-pink-400 border-b-2 border-pink-400 bg-pink-400/5' : 'text-neutral-500 hover:text-neutral-300'}`}><Icon name="userCircle" size={24} /> ตัวละคร</button>
+                                </div>
+                                <div className="p-10">
+                                    <div className="mb-10 relative">
+                                        <input autoFocus value={search} onChange={e => setSearch(e.target.value)} className={`w-full bg-[#1a1a1a] border border-white/5 rounded-3xl px-8 py-6 focus:outline-none focus:ring-4 transition-all shadow-inner font-medium text-xl ${searchType === 'anime' ? 'focus:ring-indigo-500/20' : 'focus:ring-pink-500/20'}`} placeholder={searchType === 'anime' ? "พิมพ์ชื่อเรื่องไทยหรืออังกฤษ..." : "พิมพ์ชื่อตัวละคร..."} />
+                                        {isAITranslating && (
+                                            <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3 text-sm font-bold text-indigo-400 bg-[#262626] px-5 py-2 rounded-full shadow-sm animate-pulse border border-indigo-500/20">
+                                                <Icon name="sparkles" size={18} /> AI กำลังแปลชื่อ...
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 overflow-y-auto max-h-[40vh] pr-4 custom-scrollbar">
+                                        {(searching || isAITranslating) && <div className="col-span-full py-16 text-center text-indigo-400 font-bold animate-pulse text-xl">กำลังดึงข้อมูลจากฐานข้อมูล...</div>}
+                                        {results.map(item => (
+                                            <button key={item.id} onClick={() => selectItem(item)} className="group text-left animate-slide-up">
+                                                <div className="aspect-[3/4] rounded-[1.5rem] overflow-hidden mb-4 bg-[#1a1a1a] shadow-lg border border-white/5">
+                                                    <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                                                </div>
+                                                <p className="text-sm font-bold text-neutral-300 group-hover:text-white transition-colors line-clamp-2 leading-tight">{item.title}</p>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const startApp = () => {
+            const rootElement = document.getElementById('root');
+            if (rootElement && window.ReactDOM && window.React) {
+                const root = window.ReactDOM.createRoot(rootElement);
+                root.render(<App />);
+            } else { setTimeout(startApp, 50); }
+        };
+        startApp();
+    </script>
+</body>
+</html>
