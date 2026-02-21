@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -51,6 +51,7 @@
 
     <script type="text/babel">
         const { useState, useEffect, useRef, Fragment } = React;
+        const apiKey = ""; 
 
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
@@ -65,10 +66,10 @@
                 playCircle: <Fragment><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></Fragment>,
                 edit: <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>,
                 help: <Fragment><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></Fragment>,
-                userCircle: <Fragment><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></Fragment>,
-                plus: <path d="M12 5v14M5 12h14"/>,
-                eye: <Fragment><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></Fragment>,
-                trophy: <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.34c3.12-.5 5-2.66 5-5.66V2H6v7c0 3 1.88 5.16 5 5.66z"/>
+                sparkles: <path d="m12 3 1.912 5.885L20 10.8l-5.088 1.915L12 18.6l-1.912-5.885L5 10.8l5.088-1.915L12 3Z"/>,
+                info: <Fragment><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></Fragment>,
+                trophy: <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.34c3.12-.5 5-2.66 5-5.66V2H6v7c0 3 1.88 5.16 5 5.66z"/>,
+                eye: <Fragment><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></Fragment>
             };
             return (
                 <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -77,8 +78,8 @@
             );
         };
 
-        const CAT_PHYSICAL = ["หญิง", "ชาย", "ผมสีชมพู", "ผมสองสี", "ผมสีส้ม", "ผมสีน้ำตาล", "ผมสีเทา", "ผมสีขาว", "ผมสีฟ้า", "ผมสีทอง", "ผมสีเขียว", "ผมสีแดง", "ผมสีม่วง", "ผมสั้น", "ผมยาว", "หัวโล้น", "มีที่ปิดตา", "มีรอยสัก", "มีแผลเป็น", "ใส่แว่น", "ใส่หมวก", "ใส่หน้ากาก", "ใส่ผ้าคลุม", "ใส่ผ้าพันคอ", "ใส่สูท", "มีปีก", "มีหาง", "มีเขี้ยว", "มีเขา", "กล้ามโต", "หุ่นยนต์", "ไซบอร์ก", "ผิวแทน", "แก่", "เด็ก", "ไม่ใช่มนุษย์", "นักเรียน"];
-        const CAT_TRAITS = ["พลังไฟ", "พลังน้ำ", "พลังสายฟ้า", "พลังน้ำแข็ง", "พลังจิต", "แปลงร่างได้", "ตัวเอก", "ตัวร้าย", "นางเอก", "ตัวตลก", "เป็นสัตว์", "เทพเจ้า", "ปีศาจ", "แวมไพร์", "เอลฟ์", "มนุษย์ต่างดาว", "อาจารย์", "นักเรียน", "นักดาบ", "มือปืน", "จอมเวท", "อัศวิน", "ไอดอล", "นักดนตรี", "ราชาหรือราชินี", "เมดหรือพ่อบ้าน", "ยากูซ่า", "โจรสลัด", "นินจา", "กุ๊ก", "หมอ", "นักสืบ", "สายลับ", "มีน้อง", "เลี้ยงสัตว์", "ต่างโลก", "ระทึกขวัญ", "Slice of Life", "School Life", "Comedy", "Romance", "Sci-Fi", "Mystery", "Horror", "ดนตรี", "ทำอาหาร", "กีฬา", "โลกอนาคต", "ฮาเร็ม", "ดราม่า"];
+        const CAT_PHYSICAL = ["Girl", "Boy", "Pink Hair", "Two-toned Hair", "Orange Hair", "Brown Hair", "Gray Hair", "White Hair", "Blue Hair", "Blonde Hair", "Green Hair", "Red Hair", "Purple Hair", "Short Hair", "Long Hair", "Bald", "Eyepatch", "Tattoo", "Scar", "Glasses", "Hat", "Mask", "Cape", "Scarf", "Suit", "Wings", "Tail", "Fangs", "Horns", "Muscular", "Robot", "Cyborg", "Tan Skin", "Elderly", "Child", "Non-Human", "Student"];
+        const CAT_TRAITS = ["Fire Power", "Water Power", "Thunder Power", "Ice Power", "Psychic", "Shapeshifter", "Protagonist", "Villain", "Heroine", "Clown", "Animal-like", "God", "Demon", "Vampire", "Elf", "Alien", "Teacher", "Sword User", "Gun User", "Mage", "Knight", "Idol", "Musician", "Royalty", "Maid/Butler", "Yakuza", "Pirate", "Ninja", "Chef", "Doctor", "Detective", "Spy", "Sibling", "Pet Owner", "Isekai", "Thriller", "Slice of Life", "School Life", "Comedy", "Romance", "Sci-Fi", "Mystery", "Horror", "Sports", "Future World", "Harem", "Drama"];
 
         const shuffleAndPick = (arr, count) => [...arr].sort(() => Math.random() - 0.5).slice(0, count);
 
@@ -97,38 +98,55 @@
                         clearInterval(check);
                         const sdk = window.FirebaseSDK;
                         setFb(sdk);
-                        const handleAuth = async () => {
-                            sdk.onAuthStateChanged(sdk.auth, (u) => { if (u) setUser(u); });
+                        sdk.onAuthStateChanged(sdk.auth, (u) => { if (u) setUser(u); });
+                        const initAuth = async () => {
                             try {
                                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                                     await sdk.signInWithCustomToken(sdk.auth, __initial_auth_token);
                                 } else {
                                     await sdk.signInAnonymously(sdk.auth);
                                 }
-                            } catch (e) { try { await sdk.signInAnonymously(sdk.auth); } catch(err) {} }
+                            } catch(e) { await sdk.signInAnonymously(sdk.auth); }
                         };
-                        handleAuth();
+                        initAuth();
                     }
                 }, 100);
             }, []);
 
-            if (!user) return <div className="min-h-screen flex flex-col items-center justify-center text-indigo-400 font-bold animate-pulse text-lg">กำลังเชื่อมต่อ...</div>;
+            if (!user) return <div className="min-h-screen flex flex-col items-center justify-center text-indigo-400 font-bold animate-pulse text-lg tracking-tight">กำลังเชื่อมต่อ...</div>;
 
             return (
-                <div className="min-h-screen flex flex-col">
+                <div className="min-h-screen flex flex-col bg-[#171717]">
                     {screen === 'hub' && (
-                        <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up">
-                            <h1 className="text-6xl font-black text-gradient mb-12">Anime Game Hub</h1>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl">
+                        <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up text-center">
+                            <svg viewBox="0 0 100 100" className="w-28 h-28 mb-4 mx-auto drop-shadow-lg">
+                                <g fill="#ea580c">
+                                    <circle cx="50" cy="50" r="16" />
+                                    <path d="M50 28 C65 15, 75 -5, 50 5 C25 -5, 35 15, 50 28" transform="rotate(0 50 50)" />
+                                    <path d="M50 28 C65 15, 75 -5, 50 5 C25 -5, 35 15, 50 28" transform="rotate(60 50 50)" />
+                                    <path d="M50 28 C65 15, 75 -5, 50 5 C25 -5, 35 15, 50 28" transform="rotate(120 50 50)" />
+                                    <path d="M50 28 C65 15, 75 -5, 50 5 C25 -5, 35 15, 50 28" transform="rotate(180 50 50)" />
+                                    <path d="M50 28 C65 15, 75 -5, 50 5 C25 -5, 35 15, 50 28" transform="rotate(240 50 50)" />
+                                    <path d="M50 28 C65 15, 75 -5, 50 5 C25 -5, 35 15, 50 28" transform="rotate(300 50 50)" />
+                                </g>
+                                <circle cx="45" cy="50" r="5" fill="white" />
+                            </svg>
+                            <h1 className="text-6xl font-black text-gradient mb-12 tracking-tighter">Anime Game Hub</h1>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-5xl px-4">
                                 <button onClick={() => {setGameType('bingo'); setScreen('lobby');}} className="bg-[#262626] p-10 rounded-[2.5rem] border border-white/5 hover:border-indigo-500/30 transition-all text-left group shadow-xl">
                                     <Icon name="grid" size={40} className="text-indigo-400 mb-6" />
-                                    <h3 className="text-2xl font-bold mb-2 text-white">Anime Grid Bingo</h3>
-                                    <p className="text-neutral-500 font-medium">บิงโกสุ่มหมวดหมู่ แข่งกันเรียง 3 ช่อง</p>
+                                    <h3 className="text-2xl font-bold mb-2 text-white">บิงโกกกก</h3>
+                                    <p className="text-neutral-500 font-medium text-sm">Random categories challenge.</p>
                                 </button>
                                 <button onClick={() => {setGameType('yesno'); setScreen('lobby');}} className="bg-[#262626] p-10 rounded-[2.5rem] border border-white/5 hover:border-pink-500/30 transition-all text-left group shadow-xl">
                                     <Icon name="help" size={40} className="text-pink-400 mb-6" />
-                                    <h3 className="text-2xl font-bold mb-2 text-white">ใช่หรือไม่? (Guessing)</h3>
-                                    <p className="text-neutral-500 font-medium">ตั้งชื่อลับแล้วทายกันเองทางหน้าจอ</p>
+                                    <h3 className="text-2xl font-bold mb-2 text-white">ทายมาสิน้อง</h3>
+                                    <p className="text-neutral-500 font-medium text-sm">Guess the secret character.</p>
+                                </button>
+                                <button onClick={() => {setGameType('fact'); setScreen('lobby');}} className="bg-[#262626] p-10 rounded-[2.5rem] border border-white/5 hover:border-cyan-500/30 transition-all text-left group shadow-xl">
+                                    <Icon name="info" size={40} className="text-cyan-400 mb-6" />
+                                    <h3 className="text-2xl font-bold mb-2 text-white">ข้อไหนว้า</h3>
+                                    <p className="text-neutral-500 font-medium text-sm">Identify the true fact using AI.</p>
                                 </button>
                             </div>
                         </div>
@@ -136,12 +154,20 @@
                     {screen === 'lobby' && <Lobby fb={fb} appId={appId} gameType={gameType} onBack={() => setScreen('hub')} onJoin={(id) => {setRoomId(id); setScreen('game');}} user={user} playerName={playerName} setPlayerName={setPlayerName} />}
                     {screen === 'game' && gameType === 'bingo' && <BingoGame fb={fb} appId={appId} roomId={roomId} onBack={() => setScreen('hub')} user={user} playerName={playerName} />}
                     {screen === 'game' && gameType === 'yesno' && <GuessingGame fb={fb} appId={appId} roomId={roomId} onBack={() => setScreen('hub')} user={user} playerName={playerName} />}
+                    {screen === 'game' && gameType === 'fact' && <AnimeFactGame fb={fb} appId={appId} roomId={roomId} onBack={() => setScreen('hub')} user={user} playerName={playerName} />}
                 </div>
             );
         }
 
         function Lobby({ fb, appId, gameType, onBack, onJoin, user, playerName, setPlayerName }) {
             const [roomCode, setRoomCode] = useState('');
+            
+            const displayTitles = {
+                bingo: 'บิงโกกกก',
+                yesno: 'ทายมาสิน้อง',
+                fact: 'ข้อไหนว้า'
+            };
+
             const handleAction = async (isCreate) => {
                 if (!playerName.trim()) return;
                 const id = isCreate ? Math.random().toString(36).substring(2, 5).toUpperCase() : roomCode.toUpperCase();
@@ -149,29 +175,34 @@
                 if (isCreate) {
                     await fb.setDoc(roomRef, {
                         gameType, owner: user.uid, players: { [user.uid]: playerName }, playerOrder: [user.uid],
-                        grid: Array(9).fill(null), gridSize: 3, topCats: shuffleAndPick(CAT_PHYSICAL, 5), leftCats: shuffleAndPick(CAT_TRAITS, 5),
-                        turnUid: user.uid, winnerUid: null, secrets: {}, reveals: {}, createdAt: new Date().toISOString()
+                        grid: Array(9).fill(null), gridSize: 3, 
+                        topCats: shuffleAndPick(CAT_PHYSICAL, 3), leftCats: shuffleAndPick(CAT_TRAITS, 3),
+                        turnUid: user.uid, winnerUid: null, secrets: {}, reveals: {}, factData: null, guesses: {}, createdAt: new Date().toISOString()
                     });
                     onJoin(id);
                 } else {
                     const snap = await fb.getDoc(roomRef);
                     if (snap.exists()) {
-                        await fb.updateDoc(roomRef, { [`players.${user.uid}`]: playerName, playerOrder: fb.arrayUnion(user.uid) });
+                        const data = snap.data();
+                        const newOrder = data.playerOrder || [];
+                        if (!newOrder.includes(user.uid)) newOrder.push(user.uid);
+                        await fb.updateDoc(roomRef, { [`players.${user.uid}`]: playerName, playerOrder: newOrder });
                         onJoin(id);
-                    } else { alert("ไม่พบรหัสห้องที่ระบุ"); }
+                    } else { alert("Room not found"); }
                 }
             };
             return (
                 <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up">
                     <div className="w-full max-w-md bg-[#262626] p-10 rounded-[2.5rem] border border-white/5 shadow-2xl">
-                        <button onClick={onBack} className="text-neutral-500 mb-6 flex items-center font-bold text-sm hover:text-white transition-colors"><Icon name="back" size={16} className="mr-2" /> กลับ</button>
-                        <h2 className="text-3xl font-black mb-8 text-center text-gradient uppercase">{gameType} Room</h2>
+                        <button onClick={onBack} className="text-neutral-500 mb-6 flex items-center font-bold text-sm hover:text-white transition-colors"><Icon name="back" size={16} className="mr-2" /> กลับหน้าหลัก</button>
+                        <h2 className="text-3xl font-black mb-8 text-center text-gradient uppercase">ห้อง {displayTitles[gameType]}</h2>
                         <div className="space-y-6">
-                            <input value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-4 text-white font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/30" placeholder="ชื่อเล่นของคุณ" />
+                            <input value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-4 text-white font-bold focus:outline-none" placeholder="ใส่ชื่อเล่นของคุณ" />
+
                             <button onClick={() => handleAction(true)} className="w-full btn-primary py-4 rounded-2xl font-bold shadow-lg">สร้างห้องใหม่</button>
                             <div className="flex gap-2">
                                 <input value={roomCode} onChange={e => setRoomCode(e.target.value)} className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-4 text-white font-mono uppercase focus:outline-none" placeholder="รหัสห้อง" />
-                                <button onClick={() => handleAction(false)} className="bg-[#333] px-6 rounded-2xl font-bold transition-all">เข้าร่วม</button>
+                                <button onClick={() => handleAction(false)} className="bg-[#333] px-6 rounded-2xl font-bold transition-all hover:bg-[#444]">เข้าร่วม</button>
                             </div>
                         </div>
                     </div>
@@ -185,6 +216,7 @@
             const [topCats, setTopCats] = useState([]);
             const [leftCats, setLeftCats] = useState([]);
             const [turnUid, setTurnUid] = useState(null);
+            const [playerOrder, setPlayerOrder] = useState([]);
             const [winnerUid, setWinnerUid] = useState(null);
             const [activeCell, setActiveCell] = useState(null);
             const [search, setSearch] = useState('');
@@ -192,21 +224,23 @@
             const [results, setResults] = useState([]);
             const [searching, setSearching] = useState(false);
             const [manualMode, setManualMode] = useState(false);
-            const [manualTitle, setManualTitle] = useState('');
             const [players, setPlayers] = useState({});
+            const [owner, setOwner] = useState(null);
 
             useEffect(() => {
                 const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
                 return fb.onSnapshot(roomRef, (snap) => {
                     if (snap.exists()) {
                         const d = snap.data();
-                        setGrid(d.grid || []);
+                        setGrid(d.grid || Array((d.gridSize || 3)**2).fill(null));
                         setGridSize(d.gridSize || 3);
                         setTopCats(d.topCats || []);
                         setLeftCats(d.leftCats || []);
                         setTurnUid(d.turnUid);
+                        setPlayerOrder(d.playerOrder || []);
                         setWinnerUid(d.winnerUid);
                         setPlayers(d.players || {});
+                        setOwner(d.owner || null);
                     }
                 });
             }, []);
@@ -236,15 +270,22 @@
             };
 
             const selectItem = async (item) => {
-                const newGrid = [...grid];
-                newGrid[activeCell] = { title: item.title, image: item.image, uid: user.uid, by: playerName, isManual: !item.image };
-                const won = checkWin(newGrid, gridSize);
+                if (activeCell === null) return;
                 const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
                 const snap = await fb.getDoc(roomRef);
-                const order = snap.data().playerOrder;
+                if (!snap.exists()) return;
+                
+                const d = snap.data();
+                const latestGrid = [...(d.grid || Array(gridSize * gridSize).fill(null))];
+                const order = d.playerOrder || [];
+                
+                latestGrid[activeCell] = { title: item.title, image: item.image || null, uid: user.uid, by: playerName || 'Anonymous', isManual: !item.image };
+                
+                const won = checkWin(latestGrid, gridSize);
                 const nextTurn = order[(order.indexOf(user.uid) + 1) % order.length];
-                await fb.updateDoc(roomRef, { grid: newGrid, turnUid: won ? turnUid : nextTurn, winnerUid: won ? user.uid : null });
-                setActiveCell(null); setSearch(''); setManualMode(false); setManualTitle('');
+                
+                await fb.updateDoc(roomRef, { grid: latestGrid, turnUid: won ? user.uid : nextTurn, winnerUid: won ? user.uid : null });
+                setActiveCell(null); setSearch(''); setManualMode(false);
             };
 
             const isTurn = user.uid === turnUid;
@@ -252,29 +293,48 @@
             return (
                 <div className="flex-1 p-6 flex flex-col items-center animate-slide-up">
                     <div className="w-full max-w-5xl flex justify-between items-center mb-8">
-                        <button onClick={onBack} className="text-neutral-500 font-bold flex items-center hover:text-white transition-colors"><Icon name="back" className="mr-2" /> ออก</button>
+                        <button onClick={onBack} className="text-neutral-500 font-bold flex items-center hover:text-white transition-colors"><Icon name="back" className="mr-2" /> Exit</button>
                         <div className="flex gap-4">
                             <div className={`px-6 py-3 rounded-2xl border font-bold transition-all ${isTurn && !winnerUid ? 'bg-indigo-600 text-white shadow-lg' : 'bg-[#262626] text-neutral-500 border-white/5'}`}>
-                                {isTurn ? 'ตาของคุณ' : `ตาของ ${players[turnUid]}`}
+                                {isTurn ? 'YOUR TURN' : players[turnUid] ? `${players[turnUid].toUpperCase()}'S TURN` : 'WAITING...'}
                             </div>
-                            <div className="bg-indigo-600/20 px-6 py-3 rounded-2xl font-mono text-indigo-400 font-bold tracking-widest border border-indigo-500/20 shadow-inner">ROOM: {roomId}</div>
+                            <div className="bg-indigo-600/20 px-6 py-3 rounded-2xl font-mono text-indigo-400 font-bold tracking-widest border border-indigo-500/20 shadow-inner uppercase">Room: {roomId}</div>
                         </div>
                     </div>
 
-                    <div className="bg-[#262626] p-8 rounded-[3rem] border border-white/5 w-full max-w-4xl overflow-x-auto shadow-2xl">
-                        <div className={`grid grid-cols-${gridSize+1} gap-4 min-w-[600px]`}>
+                    {(!roomId || (user && owner === user.uid)) && !winnerUid && (
+                        <div className="flex flex-col items-center gap-3 p-4 bg-[#262626]/40 rounded-[2rem] border border-white/5 mb-6 w-full max-w-4xl">
+                            <div className="text-neutral-500 text-xs font-bold uppercase tracking-[0.2em]">เลือกขนาดตาราง</div>
+                            <div className="flex gap-4 justify-center">
+                                {[3, 4, 5].map(s => (
+                                    <button key={s} onClick={async () => {
+                                        const empty = Array(s*s).fill(null);
+                                        const nT = shuffleAndPick(CAT_PHYSICAL, s);
+                                        const nL = shuffleAndPick(CAT_TRAITS, s);
+                                        if (roomId) {
+                                            await fb.updateDoc(fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId), { gridSize: s, grid: empty, topCats: nT, leftCats: nL });
+                                        }
+                                    }} className={`w-12 h-12 rounded-xl font-bold transition-all ${gridSize === s ? 'bg-indigo-600 text-white shadow-lg' : 'bg-[#1a1a1a] text-neutral-500 hover:text-neutral-300'}`}>{s}x{s}</button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="bg-[#262626] p-4 md:p-8 rounded-[3rem] border border-white/5 w-full max-w-4xl overflow-x-auto shadow-2xl custom-scrollbar">
+                        <div className={`grid grid-cols-${gridSize+1} gap-2 md:gap-4 min-w-[500px]`}>
                             <div className="aspect-square"></div>
-                            {topCats.slice(0, gridSize).map((c, i) => <div key={i} className="aspect-square bg-indigo-900/20 rounded-2xl flex items-center justify-center p-3 text-center font-black text-indigo-300 text-xl leading-tight border border-indigo-500/10 shadow-inner">{c}</div>)}
+                            {topCats.slice(0, gridSize).map((c, i) => <div key={i} className="aspect-square bg-indigo-900/30 rounded-2xl flex items-center justify-center p-3 text-center font-black text-indigo-300 text-xs md:text-xl leading-tight border border-indigo-500/10 shadow-inner uppercase">{c}</div>)}
                             {leftCats.slice(0, gridSize).map((lc, r) => (
                                 <Fragment key={r}>
-                                    <div className="aspect-square bg-pink-900/20 rounded-2xl flex items-center justify-center p-3 text-center font-black text-pink-300 text-xl leading-tight border border-pink-500/10 shadow-inner">{lc}</div>
+                                    <div className="aspect-square bg-pink-900/30 rounded-2xl flex items-center justify-center p-3 text-center font-black text-pink-300 text-xs md:text-xl leading-tight border border-pink-500/10 shadow-inner uppercase">{lc}</div>
                                     {Array.from({length: gridSize}).map((_, c) => {
                                         const idx = r * gridSize + c;
                                         const cell = grid[idx];
+                                        const isMine = cell && cell.uid === user.uid;
                                         return (
-                                            <button key={c} disabled={!isTurn || !!cell || winnerUid} onClick={() => setActiveCell(idx)} className={`aspect-square rounded-2xl overflow-hidden relative flex items-center justify-center transition-all ${cell ? (cell.uid === user.uid ? 'border-4 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.3)]' : 'border-4 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]') : 'bg-[#1a1a1a] hover:bg-indigo-500/10 shadow-inner border border-white/5'}`}>
-                                                {cell ? (cell.isManual ? <span className="font-black text-center p-2 text-sm leading-tight text-white">{cell.title}</span> : <img src={cell.image} className="w-full h-full object-cover" />) : (isTurn && !winnerUid && <div className="text-indigo-500/20 text-4xl font-black">+</div>)}
-                                                {cell && <div className="absolute top-2 right-2 bg-black/60 text-[10px] px-2 py-1 rounded text-white font-black tracking-wider shadow-sm uppercase">{cell.by}</div>}
+                                            <button key={c} disabled={!isTurn || !!cell || winnerUid} onClick={() => setActiveCell(idx)} className={`aspect-square rounded-2xl overflow-hidden relative flex items-center justify-center transition-all ${cell ? (isMine ? 'border-4 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.3)]' : 'border-4 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]') : 'bg-[#1a1a1a] hover:bg-indigo-500/10 shadow-inner border border-white/5'}`}>
+                                                {cell ? (cell.isManual ? <span className="font-black text-center p-2 text-xs md:text-sm leading-tight text-white">{cell.title}</span> : <img src={cell.image} className="w-full h-full object-cover" />) : (isTurn && !winnerUid && <div className="text-indigo-500/20 text-4xl font-black">+</div>)}
+                                                {cell && <div className="absolute top-1 right-1 bg-black/60 text-[8px] px-2 py-0.5 rounded text-white font-black uppercase">{cell.by}</div>}
                                             </button>
                                         );
                                     })}
@@ -282,40 +342,32 @@
                             ))}
                         </div>
                     </div>
-
                     {winnerUid && (
-                        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center p-6 animate-slide-up">
-                            <Icon name="trophy" size={120} className="text-yellow-400 mb-8 animate-victory" />
-                            <h2 className="text-8xl font-black text-white mb-4 drop-shadow-[0_0_20px_rgba(79,70,229,0.5)] tracking-tighter">BINGO!</h2>
-                            <p className="text-3xl text-indigo-400 font-bold mb-12 uppercase tracking-widest">{players[winnerUid]} WINNER</p>
-                            <button onClick={onBack} className="btn-primary px-12 py-5 rounded-3xl font-black text-xl transition-all shadow-xl shadow-indigo-500/20">กลับหน้าหลัก</button>
+                        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center p-6 animate-slide-up text-center">
+                            <Icon name="trophy" size={120} className="text-yellow-400 mb-8 animate-victory mx-auto" />
+                            <h2 className="text-8xl font-black text-white mb-4 drop-shadow-[0_0_20px_rgba(79,70,229,0.5)] tracking-tighter text-gradient uppercase">BINGO!</h2>
+                            <p className="text-3xl text-indigo-400 font-bold mb-12 uppercase tracking-widest">{players[winnerUid]} WON THE GAME</p>
+                            <button onClick={onBack} className="btn-primary px-12 py-5 rounded-3xl font-black text-xl transition-all shadow-xl">Back to Hub</button>
                         </div>
                     )}
-
                     {activeCell !== null && (
                         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-                            <div className="w-full max-w-xl bg-[#262626] rounded-[2.5rem] flex flex-col h-[80vh] border border-white/5 animate-slide-up overflow-hidden shadow-2xl">
+                            <div className="w-full max-w-xl bg-[#262626] rounded-[3rem] flex flex-col h-[80vh] border border-white/5 animate-slide-up overflow-hidden shadow-2xl">
                                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-[#2a2a2a]">
-                                    <h3 className="text-2xl font-bold">เลือกรายการลงช่อง</h3>
+                                    <h3 className="text-2xl font-bold">Select Item</h3>
                                     <button onClick={() => {setActiveCell(null); setManualMode(false);}} className="text-neutral-500 hover:text-white transition-colors"><Icon name="close" /></button>
                                 </div>
                                 <div className="flex border-b border-white/5 font-black bg-[#1a1a1a]">
-                                    <button onClick={() => {setManualMode(false); setSearchType('anime');}} className={`flex-1 py-5 transition-all flex items-center justify-center gap-2 ${!manualMode && searchType === 'anime' ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-400/5' : 'text-neutral-500 hover:text-neutral-400'}`}>
-                                        <Icon name="playCircle" size={20} /> อนิเมะ
-                                    </button>
-                                    <button onClick={() => {setManualMode(false); setSearchType('character');}} className={`flex-1 py-5 transition-all flex items-center justify-center gap-2 ${!manualMode && searchType === 'character' ? 'text-pink-400 border-b-2 border-pink-400 bg-pink-500/5' : 'text-neutral-500 hover:text-neutral-400'}`}>
-                                        <Icon name="userCircle" size={20} /> ตัวละคร
-                                    </button>
-                                    <button onClick={() => setManualMode(true)} className={`flex-1 py-5 transition-all flex items-center justify-center gap-2 ${manualMode ? 'text-green-400 border-b-2 border-green-400 bg-green-500/5' : 'text-neutral-500 hover:text-neutral-400'}`}>
-                                        <Icon name="edit" size={20} /> พิมพ์เอง
-                                    </button>
+                                    <button onClick={() => {setManualMode(false); setSearchType('anime');}} className={`flex-1 py-5 transition-all ${!manualMode && searchType === 'anime' ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-400/5' : 'text-neutral-500'}`}>Anime</button>
+                                    <button onClick={() => {setManualMode(false); setSearchType('character');}} className={`flex-1 py-5 transition-all ${!manualMode && searchType === 'character' ? 'text-pink-400 border-b-2 border-pink-400 bg-pink-500/5' : 'text-neutral-500'}`}>Character</button>
+                                    <button onClick={() => setManualMode(true)} className={`flex-1 py-5 transition-all ${manualMode ? 'text-green-400 border-b-2 border-green-400 bg-green-500/5' : 'text-neutral-500'}`}>Manual</button>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                                     {!manualMode ? (
                                         <>
-                                            <input autoFocus value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl p-5 mb-6 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-white font-bold" placeholder={`พิมพ์ชื่อ${searchType === 'anime' ? 'อนิเมะ' : 'ตัวละคร'}...`} />
+                                            <input autoFocus value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl p-5 mb-6 text-white font-bold outline-none focus:ring-2 focus:ring-indigo-500/30 shadow-inner" placeholder="Search..." />
                                             <div className="grid grid-cols-2 gap-4">
-                                                {searching && <div className="col-span-2 text-center text-indigo-400 animate-pulse font-black py-10 tracking-widest">SEARCHING...</div>}
+                                                {searching && <div className="col-span-2 text-center text-indigo-400 animate-pulse font-black py-10 tracking-widest uppercase">SEARCHING...</div>}
                                                 {results.map(item => (
                                                     <button key={item.id} onClick={() => selectItem(item)} className="text-left group animate-slide-up">
                                                         <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 bg-[#1a1a1a] border border-white/5 group-hover:border-indigo-500/50 transition-all shadow-md"><img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /></div>
@@ -326,8 +378,8 @@
                                         </>
                                     ) : (
                                         <div className="space-y-6">
-                                            <input autoFocus value={manualTitle} onChange={e => setManualTitle(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl p-6 text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-green-500/30 text-white shadow-inner" placeholder="ระบุชื่อที่ต้องการ..." />
-                                            <button disabled={!manualTitle.trim()} onClick={() => selectItem({title: manualTitle.trim(), image: null})} className="w-full py-5 bg-green-600 hover:bg-green-700 transition-all rounded-2xl font-black text-xl shadow-lg">บันทึก</button>
+                                            <input autoFocus value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl p-6 text-2xl font-bold text-white shadow-inner outline-none focus:ring-2 focus:ring-green-500/30" placeholder="Type name..." />
+                                            <button disabled={!search.trim()} onClick={() => selectItem({title: search.trim(), image: null})} className="w-full py-5 bg-green-600 hover:bg-green-700 transition-all rounded-2xl font-black text-xl shadow-lg">Save</button>
                                         </div>
                                     )}
                                 </div>
@@ -338,21 +390,19 @@
             );
         }
 
+        // --- YES/NO GUESSING ---
         function GuessingGame({ fb, appId, roomId, onBack, user, playerName }) {
             const [roomData, setRoomData] = useState(null);
             const [search, setSearch] = useState('');
             const [searchType, setSearchType] = useState('anime');
             const [results, setResults] = useState([]);
-            const [manualTitle, setManualTitle] = useState('');
             const [manualMode, setManualMode] = useState(false);
             const [picking, setPicking] = useState(false);
             const [searching, setSearching] = useState(false);
 
             useEffect(() => {
                 const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-                return fb.onSnapshot(roomRef, (snap) => {
-                    if (snap.exists()) setRoomData(snap.data());
-                });
+                return fb.onSnapshot(roomRef, (snap) => { if (snap.exists()) setRoomData(snap.data()); });
             }, []);
 
             useEffect(() => {
@@ -373,17 +423,12 @@
             const setSecret = async (item) => {
                 const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
                 await fb.updateDoc(roomRef, { [`secrets.${user.uid}`]: { title: item.title, image: item.image || null }, [`reveals.${user.uid}`]: false });
-                setPicking(false); setManualTitle(''); setSearch(''); setManualMode(false);
+                setPicking(false); setSearch(''); setManualMode(false);
             };
 
             const revealMyAnswer = async () => {
                 const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
                 await fb.updateDoc(roomRef, { [`reveals.${user.uid}`]: true });
-            };
-
-            const resetGame = async () => {
-                const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-                await fb.updateDoc(roomRef, { secrets: {}, reveals: {} });
             };
 
             if (!roomData) return null;
@@ -394,56 +439,42 @@
             return (
                 <div className="flex-1 p-6 flex flex-col items-center animate-slide-up">
                     <div className="w-full max-w-4xl flex justify-between items-center mb-10">
-                        <button onClick={onBack} className="text-neutral-500 font-bold flex items-center hover:text-white transition-colors"><Icon name="back" className="mr-2" /> เลิกเล่น</button>
-                        <div className="bg-pink-600/20 px-8 py-4 rounded-3xl font-mono text-pink-400 font-black tracking-widest border border-pink-500/20 shadow-inner">ROOM: {roomId}</div>
+                        <button onClick={onBack} className="text-neutral-500 font-bold flex items-center hover:text-white transition-colors"><Icon name="back" className="mr-2" /> Exit</button>
+                        <div className="bg-pink-600/20 px-8 py-4 rounded-3xl font-mono text-pink-400 font-black tracking-widest border border-pink-500/20 shadow-inner uppercase">Guessing Mode</div>
                     </div>
-
                     <div className="w-full max-w-4xl flex flex-col gap-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="bg-[#262626] p-8 rounded-[3rem] border border-white/5 shadow-2xl flex flex-col items-center text-center">
-                                <h3 className="text-lg font-black text-neutral-500 mb-6 uppercase tracking-[0.2em]">ชื่อลับของคุณ</h3>
+                                <h3 className="text-lg font-black text-neutral-500 mb-6 uppercase tracking-[0.2em]">Your Secret</h3>
                                 {mySecret ? (
                                     <div className="w-full space-y-6">
                                         <div className="bg-indigo-500/10 border-2 border-indigo-500/30 p-8 rounded-[2rem] w-full animate-slide-up shadow-inner relative">
-                                            {mySecret.image && <img src={mySecret.image} className="w-24 h-32 object-cover rounded-2xl mx-auto mb-4 border border-indigo-500/30" />}
-                                            <p className="text-4xl font-black text-indigo-400 mb-2">{mySecret.title}</p>
-                                            <p className="text-xs text-neutral-500 font-bold italic">ความลับที่คุณตั้งไว้</p>
+                                            {mySecret.image && <img src={mySecret.image} className="w-24 h-32 object-cover rounded-2xl mx-auto mb-4 border border-indigo-500/30 shadow-lg" />}
+                                            <p className="text-3xl font-black text-indigo-400 mb-2 leading-tight">{mySecret.title}</p>
                                             {myRevealed && <div className="absolute -top-3 -right-3 bg-green-500 text-black text-[10px] font-black px-3 py-1 rounded-full shadow-lg">REVEALED</div>}
                                         </div>
-                                        {!myRevealed && (
-                                            <button onClick={revealMyAnswer} className="w-full py-5 bg-red-600/20 text-red-400 border border-red-500/30 rounded-2xl font-black text-xl hover:bg-red-600 hover:text-white transition-all flex items-center justify-center gap-3">
-                                                <Icon name="eye" size={20} /> เฉลยชื่อลับของฉัน
-                                            </button>
-                                        )}
+                                        {!myRevealed && <button onClick={revealMyAnswer} className="w-full py-5 bg-red-600/20 text-red-400 border border-red-500/30 rounded-2xl font-black text-xl hover:bg-red-600 hover:text-white transition-all">Reveal My Answer</button>}
                                     </div>
                                 ) : (
-                                    <button onClick={() => setPicking(true)} className="w-full py-10 border-4 border-dashed border-white/5 rounded-[2rem] text-indigo-400 font-black text-2xl hover:bg-indigo-500/5 hover:border-indigo-500/20 transition-all flex flex-col items-center gap-4">
-                                        <Icon name="plus" size={40} className="opacity-50" />
-                                        กดตั้งชื่อลับ
-                                    </button>
+                                    <button onClick={() => setPicking(true)} className="w-full py-10 border-4 border-dashed border-white/5 rounded-[2rem] text-indigo-400 font-black text-2xl hover:bg-indigo-500/5 hover:border-indigo-500/20 transition-all">Set Secret</button>
                                 )}
                             </div>
-
                             <div className="bg-[#262626] p-8 rounded-[3rem] border border-white/5 shadow-2xl">
-                                <h3 className="text-lg font-black text-neutral-500 mb-6 uppercase tracking-[0.2em]">รายชื่อผู้เล่นและเฉลย</h3>
+                                <h3 className="text-lg font-black text-neutral-500 mb-6 uppercase tracking-[0.2em]">Other Players</h3>
                                 <div className="space-y-4 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
                                     {Object.entries(roomData.players).map(([uid, name]) => {
-                                        const isOtherRevealed = roomData.reveals?.[uid] || false;
-                                        const otherSecret = roomData.secrets?.[uid];
+                                        const secret = roomData.secrets?.[uid];
+                                        const revealed = roomData.reveals?.[uid];
                                         return (
-                                            <div key={uid} className={`flex flex-col p-5 rounded-2xl transition-all ${otherSecret ? 'bg-indigo-500/5 border border-indigo-500/20' : 'bg-[#1a1a1a] border border-white/5'}`}>
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className={`w-3 h-3 rounded-full ${otherSecret ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]' : 'bg-neutral-700'}`}></div>
-                                                        <span className="font-black text-lg">{name} {uid === user.uid && '(YOU)'}</span>
-                                                    </div>
-                                                    {isOtherRevealed && <span className="text-[10px] bg-pink-500 text-white font-black px-3 py-1 rounded-full shadow-sm">REVEALED</span>}
+                                            <div key={uid} className={`p-5 rounded-2xl border transition-all ${secret ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-[#1a1a1a] border-white/5'}`}>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-black text-lg">{name}</span>
+                                                    {revealed && <span className="text-[10px] bg-pink-500 text-white px-2 py-0.5 rounded-full font-black">REVEALED</span>}
                                                 </div>
-                                                {isOtherRevealed && otherSecret && (
+                                                {revealed && secret && (
                                                     <div className="mt-4 pt-4 border-t border-white/5 text-center animate-slide-up flex flex-col items-center">
-                                                        <p className="text-neutral-500 text-[10px] font-black uppercase mb-3">เฉลยคือ</p>
-                                                        {otherSecret.image && <img src={otherSecret.image} className="w-20 h-28 object-cover rounded-xl mb-3 border border-pink-500/20" />}
-                                                        <p className="text-2xl font-black text-white">{otherSecret.title}</p>
+                                                        {secret.image && <img src={secret.image} className="w-20 h-28 object-cover rounded-xl mb-3 shadow-md" />}
+                                                        <p className="text-2xl font-black text-white leading-tight">{secret.title}</p>
                                                     </div>
                                                 )}
                                             </div>
@@ -452,55 +483,37 @@
                                 </div>
                             </div>
                         </div>
-
-                        {mySecret && (
-                            <div className="bg-[#1a1a1a] p-8 rounded-[3rem] border border-white/5 text-center shadow-xl">
-                                <p className="text-neutral-400 font-medium text-lg mb-6">คุณสามารถเปิดเฉลยของตัวเองได้ทุกเมื่อ หรือจะกดเริ่มใหม่เพื่อล้างชื่อลับทั้งหมด</p>
-                                <button onClick={resetGame} className="px-8 py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 font-black rounded-2xl transition-all border border-white/5">ล้างกระดานและเริ่มใหม่</button>
-                            </div>
-                        )}
                     </div>
-
                     {picking && (
-                        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl">
+                        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
                             <div className="w-full max-w-xl bg-[#262626] rounded-[3rem] border border-white/5 h-[85vh] flex flex-col animate-slide-up shadow-2xl overflow-hidden">
-                                <div className="p-8 border-b border-white/5 flex justify-between items-center bg-[#2a2a2a]">
-                                    <h3 className="text-3xl font-black text-white">ตั้งชื่อลับของคุณ</h3>
-                                    <button onClick={() => {setPicking(false); setManualMode(false);}} className="text-neutral-500 hover:text-white transition-colors font-black"><Icon name="close" /></button>
+                                <div className="p-8 border-b border-white/5 flex justify-between items-center bg-[#2a2a2a] rounded-t-[3rem]">
+                                    <h3 className="text-3xl font-black text-white">Pick Character</h3>
+                                    <button onClick={() => setPicking(false)}><Icon name="close" className="text-neutral-500 hover:text-white" /></button>
                                 </div>
                                 <div className="flex border-b border-white/5 font-black bg-[#1a1a1a]">
-                                    <button onClick={() => {setManualMode(false); setSearchType('anime');}} className={`flex-1 py-5 transition-all flex items-center justify-center gap-2 ${!manualMode && searchType === 'anime' ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-400/5' : 'text-neutral-500'}`}>
-                                        <Icon name="playCircle" size={20} /> อนิเมะ
-                                    </button>
-                                    <button onClick={() => {setManualMode(false); setSearchType('character');}} className={`flex-1 py-5 transition-all flex items-center justify-center gap-2 ${!manualMode && searchType === 'character' ? 'text-pink-400 border-b-2 border-pink-400 bg-pink-500/5' : 'text-neutral-500'}`}>
-                                        <Icon name="userCircle" size={20} /> ตัวละคร
-                                    </button>
-                                    <button onClick={() => setManualMode(true)} className={`flex-1 py-5 transition-all flex items-center justify-center gap-2 ${manualMode ? 'text-green-400 border-b-2 border-green-400 bg-green-500/5' : 'text-neutral-500'}`}>
-                                        <Icon name="edit" size={20} /> พิมพ์เอง
-                                    </button>
+                                    <button onClick={() => {setManualMode(false); setSearchType('anime');}} className={`flex-1 py-5 transition-all ${!manualMode && searchType === 'anime' ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-400/5' : 'text-neutral-500'}`}>Anime</button>
+                                    <button onClick={() => {setManualMode(false); setSearchType('character');}} className={`flex-1 py-5 transition-all ${!manualMode && searchType === 'character' ? 'text-pink-400 border-b-2 border-pink-400 bg-pink-500/5' : 'text-neutral-500'}`}>Character</button>
+                                    <button onClick={() => setManualMode(true)} className={`flex-1 py-5 transition-all ${manualMode ? 'text-green-400 border-b-2 border-green-400 bg-green-500/5' : 'text-neutral-500'}`}>Manual</button>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                                     {!manualMode ? (
                                         <div className="space-y-6">
-                                            <input autoFocus value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl p-5 text-white font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/30 shadow-inner" placeholder={`ค้นหาชื่อ${searchType === 'anime' ? 'อนิเมะ' : 'ตัวละคร'}...`} />
-                                            {searching && <div className="text-center text-indigo-400 animate-pulse font-black py-4 uppercase tracking-widest">Searching...</div>}
+                                            <input autoFocus value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl p-5 text-white font-bold outline-none focus:ring-2 focus:ring-indigo-500/30 shadow-inner" placeholder="Search character..." />
+                                            {searching && <div className="text-center text-indigo-400 font-black py-4 uppercase tracking-widest">Searching...</div>}
                                             <div className="space-y-2">
                                                 {results.map((r, i) => (
                                                     <button key={i} onClick={() => setSecret(r)} className="w-full text-left p-5 bg-[#1a1a1a] hover:bg-indigo-500/10 rounded-2xl font-bold transition-all border border-white/5 flex items-center gap-4 group animate-slide-up shadow-sm">
                                                         <img src={r.image} className="w-12 h-16 object-cover rounded-lg group-hover:scale-105 transition-transform shadow-md" />
                                                         <span className="flex-1 line-clamp-1">{r.title}</span>
-                                                        <Icon name="check" size={16} className="text-green-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     </button>
                                                 ))}
                                             </div>
                                         </div>
                                     ) : (
                                         <div className="space-y-8 py-4">
-                                            <div className="space-y-4">
-                                                <label className="text-neutral-500 font-black uppercase tracking-widest text-xs px-2">ระบุชื่อลับที่ต้องการ</label>
-                                                <input autoFocus value={manualTitle} onChange={e => setManualTitle(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-3xl p-8 text-3xl font-black text-white focus:outline-none focus:ring-4 focus:ring-green-500/10 shadow-inner" placeholder="ป้อนชื่อ..." />
-                                            </div>
-                                            <button disabled={!manualTitle.trim()} onClick={() => setSecret({ title: manualTitle.trim(), image: null })} className="w-full py-6 bg-green-600 hover:bg-green-700 transition-all rounded-[2rem] font-black text-2xl shadow-xl shadow-green-900/20">บันทึกชื่อนี้</button>
+                                            <input autoFocus value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-3xl p-8 text-3xl font-black text-white outline-none focus:ring-4 focus:ring-green-500/10 shadow-inner" placeholder="Enter name..." />
+                                            <button disabled={!search.trim()} onClick={() => setSecret({ title: search.trim(), image: null })} className="w-full py-6 bg-green-600 hover:bg-green-700 transition-all rounded-3xl font-black text-2xl shadow-xl">Confirm</button>
                                         </div>
                                     )}
                                 </div>
@@ -511,12 +524,165 @@
             );
         }
 
-        const startApp = () => {
-            const root = document.getElementById('root');
-            if (root && window.ReactDOM && window.React) window.ReactDOM.createRoot(root).render(<App />);
-            else setTimeout(startApp, 50);
-        };
-        startApp();
+        // --- ANIME FACT GAME ---
+        function AnimeFactGame({ fb, appId, roomId, onBack, user, playerName }) {
+            const [roomData, setRoomData] = useState(null);
+            const [picking, setPicking] = useState(false);
+            const [search, setSearch] = useState('');
+            const [results, setResults] = useState([]);
+            const [searching, setSearching] = useState(false);
+            const [generating, setGenerating] = useState(false);
+
+            useEffect(() => {
+                const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+                return fb.onSnapshot(roomRef, (snap) => { if (snap.exists()) setRoomData(snap.data()); });
+            }, []);
+
+            useEffect(() => {
+                if (search.trim()) {
+                    const t = setTimeout(async () => {
+                        setSearching(true);
+                        try {
+                            const r = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(search)}&limit=10`);
+                            const d = await r.json();
+                            setResults(d.data?.map(m => ({ title: m.title_english || m.title, image: m.images.webp.large_image_url })) || []);
+                        } catch(e) {} finally { setSearching(false); }
+                    }, 500);
+                    return () => clearTimeout(t);
+                } else setResults([]);
+            }, [search]);
+
+            const generateFacts = async (item) => {
+                setGenerating(true); setPicking(false);
+                const systemPrompt = "จงสร้างข้อเท็จจริงภาษาไทย 4 ข้อเกี่ยวกับอนิเมะเรื่องนี้ โดยมีข้อจริง 1 ข้อ และข้อผิด 3 ข้อ ส่งกลับมาเป็น JSON เท่านั้น: { \"facts\": [{ \"text\": \"string\", \"isCorrect\": boolean }] } ห้ามมี markdown wrap";
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: `Anime: ${item.title}` }] }], systemInstruction: { parts: [{ text: systemPrompt }] } })
+                    });
+                    const data = await response.json();
+                    const text = data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/```json|```/g, "").trim();
+                    const result = JSON.parse(text);
+                    const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+                    await fb.updateDoc(roomRef, { factData: { title: item.title, image: item.image, setter: playerName, facts: result.facts.sort(() => Math.random() - 0.5) }, factRevealed: false, guesses: {} });
+                } catch(e) { alert("AI generation failed. Please try again."); }
+                finally { setGenerating(false); }
+            };
+
+            const selectAnswer = async (index) => {
+                if (!roomData || roomData.factRevealed) return;
+                const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+                await fb.updateDoc(roomRef, { [`guesses.${user.uid}`]: index });
+            };
+
+            if (!roomData) return null;
+
+            return (
+                <div className="flex-1 p-6 flex flex-col items-center animate-slide-up">
+                    <div className="w-full max-w-4xl flex justify-between items-center mb-10 text-sm md:text-base">
+                        <button onClick={onBack} className="text-neutral-500 font-bold flex items-center hover:text-white transition-colors"><Icon name="back" className="mr-2" /> Exit</button>
+                        <div className="bg-cyan-600/20 px-8 py-4 rounded-3xl font-mono text-cyan-400 font-black tracking-widest border border-cyan-500/20 shadow-inner uppercase tracking-tighter">Anime Quiz</div>
+                    </div>
+                    <div className="w-full max-w-4xl bg-[#262626] rounded-[4rem] border border-white/5 p-12 shadow-2xl flex flex-col items-center gap-8 shadow-cyan-900/10">
+                        <h2 className="text-4xl font-black text-center text-gradient uppercase tracking-widest">Anime Fact</h2>
+                        {generating && <div className="text-center py-20 animate-pulse text-cyan-400 font-black text-2xl uppercase">AI Analyzing...</div>}
+                        {!generating && roomData.factData ? (
+                            <div className="w-full flex flex-col items-center gap-8 animate-slide-up">
+                                <div className="flex flex-col md:flex-row gap-10 items-center w-full bg-[#1a1a1a] p-8 rounded-[3rem] border border-white/5 shadow-inner">
+                                    <img src={roomData.factData.image} className="w-48 h-64 object-cover rounded-3xl border border-white/5 shadow-2xl" />
+                                    <div className="flex-1 text-center md:text-left">
+                                        <p className="text-neutral-500 font-black uppercase text-xs tracking-[0.3em] mb-3">QUIZ BY {roomData.factData.setter.toUpperCase()}</p>
+                                        <h3 className="text-5xl font-black text-white mb-4 leading-tight">{roomData.factData.title}</h3>
+                                        <p className="text-cyan-400 font-bold text-xl uppercase tracking-tighter">Which one is correct?</p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 gap-4 w-full">
+                                    {roomData.factData.facts.map((fact, i) => {
+                                        const isSelected = roomData.guesses?.[user.uid] === i;
+                                        const otherGuessedCount = Object.values(roomData.guesses || {}).filter(v => v === i).length;
+                                        return (
+                                            <button
+                                                key={i}
+                                                onClick={() => selectAnswer(i)}
+                                                disabled={roomData.factRevealed}
+                                                className={`p-6 rounded-[2.5rem] border-2 transition-all duration-500 text-lg font-bold shadow-lg w-full text-left flex items-center justify-between ${
+                                                    roomData.factRevealed
+                                                        ? (fact.isCorrect
+                                                            ? 'bg-green-500/20 border-green-500 text-green-400 scale-[1.02]'
+                                                            : (isSelected ? 'bg-red-500/20 border-red-500 text-red-400' : 'bg-[#1a1a1a] border-white/5 opacity-50'))
+                                                        : (isSelected
+                                                            ? 'bg-cyan-600/20 border-cyan-500 text-cyan-400'
+                                                            : 'bg-[#1a1a1a] border-white/5 hover:border-cyan-500/30 text-white')
+                                                }`}
+                                            >
+                                                <div className="flex gap-5 items-center flex-1">
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black flex-shrink-0 ${
+                                                        roomData.factRevealed
+                                                            ? (fact.isCorrect ? 'bg-green-500 text-black' : (isSelected ? 'bg-red-500 text-black' : 'bg-neutral-800 text-neutral-500'))
+                                                            : (isSelected ? 'bg-cyan-500 text-black' : 'bg-neutral-800 text-neutral-400')
+                                                    }`}>
+                                                        {i+1}
+                                                    </div>
+                                                    <p className="leading-relaxed">{fact.text}</p>
+                                                </div>
+                                                {roomData.factRevealed && isSelected && (
+                                                    <div className="ml-4 flex-shrink-0 text-sm font-black uppercase tracking-widest">
+                                                        {fact.isCorrect ? '✅' : '❌'}
+                                                    </div>
+                                                )}
+                                                {!roomData.factRevealed && otherGuessedCount > 0 && (
+                                                    <div className="ml-4 flex -space-x-2">
+                                                        {Array.from({length: otherGuessedCount}).map((_, idx) => (
+                                                            <div key={idx} className={`w-3 h-3 rounded-full border border-[#1a1a1a] ${isSelected ? 'bg-cyan-400' : 'bg-neutral-600'}`}></div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <div className="flex gap-4 mt-4">
+                                    {!roomData.factRevealed && <button onClick={async () => await fb.updateDoc(fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId), { factRevealed: true })} className="px-12 py-5 bg-white text-black font-black text-xl rounded-full hover:scale-105 transition-all shadow-xl font-bold">Reveal Answer</button>}
+                                    <button onClick={() => setPicking(true)} className="px-10 py-5 bg-cyan-600 rounded-full font-black text-xl hover:bg-cyan-700 transition-all shadow-xl shadow-cyan-900/20 font-bold">New Topic</button>
+                                </div>
+                            </div>
+                        ) : !generating && (
+                            <div className="text-center py-20 space-y-8 animate-slide-up">
+                                <div className="w-32 h-32 bg-[#1a1a1a] rounded-full flex items-center justify-center mx-auto border border-white/5 shadow-inner"><Icon name="sparkles" size={60} className="text-cyan-400 opacity-20" /></div>
+                                <p className="text-2xl text-neutral-500 font-bold uppercase tracking-widest">No Quiz Setup</p>
+                                <button onClick={() => setPicking(true)} className="px-12 py-6 bg-cyan-600 rounded-3xl font-black text-2xl hover:bg-cyan-700 transition-all shadow-xl font-bold uppercase">Pick Anime</button>
+                            </div>
+                        )}
+                    </div>
+                    {picking && (
+                        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md font-bold">
+                            <div className="w-full max-w-xl bg-[#262626] rounded-[3rem] border border-white/5 h-[80vh] flex flex-col animate-slide-up shadow-2xl overflow-hidden">
+                                <div className="p-8 border-b border-white/5 flex justify-between items-center bg-[#2a2a2a] rounded-t-[3rem]">
+                                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Pick Topic</h3>
+                                    <button onClick={() => setPicking(false)}><Icon name="close" className="text-neutral-500 hover:text-white" /></button>
+                                </div>
+                                <div className="p-8 flex-1 overflow-y-auto custom-scrollbar">
+                                    <input autoFocus value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl p-6 text-white font-bold outline-none focus:ring-2 focus:ring-cyan-500/30 shadow-inner mb-6" placeholder="Search anime topic..." />
+                                    {searching && <div className="text-center text-cyan-400 font-black py-4 uppercase">Searching...</div>}
+                                    <div className="grid grid-cols-2 gap-6 text-center">
+                                        {results.map((r, i) => (
+                                            <button key={i} onClick={() => generateFacts(r)} className="text-left group animate-slide-up bg-[#1a1a1a] p-4 rounded-3xl border border-white/5 hover:border-cyan-500/50 transition-all shadow-sm">
+                                                <div className="aspect-[3/4] rounded-2xl overflow-hidden mb-3 shadow-md border border-white/5"><img src={r.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /></div>
+                                                <p className="text-xs font-black text-neutral-300 group-hover:text-white line-clamp-2 px-1 text-center">{r.title}</p>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = document.getElementById('root');
+        ReactDOM.createRoot(root).render(<App />);
     </script>
 </body>
 </html>
