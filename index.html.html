@@ -83,7 +83,7 @@
                 download: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>,
                 trash: <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" />,
                 book: <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V5H6.5A2.5 2.5 0 0 0 4 7.5v12z" />,
-                settings: <Fragment><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></Fragment>,
+                settings: <Fragment><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></Fragment>,
                 filter: <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />,
                 message: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             };
@@ -295,6 +295,7 @@
             const [activeCell, setActiveCell] = useState(null);
             const [search, setSearch] = useState('');
             const [searchType, setSearchType] = useState('anime');
+            const [filters, setFilters] = useState({ type: '' });
             const [results, setResults] = useState([]);
             const [searching, setSearching] = useState(false);
             const [players, setPlayers] = useState({});
@@ -345,6 +346,7 @@
                                 setResults(d.data?.map(m => ({ id: m.mal_id, title: m.name, image: m.images.webp.image_url })) || []);
                             } else {
                                 let url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(search)}&limit=15`;
+                                if (filters.type) url += `&type=${filters.type}`;
                                 const r = await fetch(url);
                                 const d = await r.json();
                                 setResults(d.data?.map(m => ({ id: m.mal_id, title: m.title_english || m.title || m.name, image: m.images.webp.large_image_url || m.images.webp.image_url })) || []);
@@ -353,7 +355,7 @@
                     }, 600);
                     return () => clearTimeout(timer);
                 } else setResults([]);
-            }, [search, searchType]);
+            }, [search, searchType, filters]);
 
             const changeGridSize = async (newSize) => {
                 if (user.uid !== owner) return;
@@ -483,6 +485,7 @@
                             search={search} setSearch={setSearch} 
                             searchType={searchType} setSearchType={setSearchType}
                             results={results} searching={searching}
+                            filters={filters} setFilters={setFilters}
                             onSelect={selectItem} onCancel={() => setActiveCell(null)}
                         />
                     )}
@@ -495,6 +498,7 @@
             const [roomData, setRoomData] = useState(null);
             const [search, setSearch] = useState('');
             const [searchType, setSearchType] = useState('anime'); 
+            const [filters, setFilters] = useState({ type: '' });
             const [results, setResults] = useState([]);
             const [picking, setPicking] = useState(false);
             const [searching, setSearching] = useState(false);
@@ -531,6 +535,7 @@
                                 setResults(d.data?.map(m => ({ title: m.name, image: m.images.webp.image_url })) || []);
                             } else {
                                 let url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(search)}&limit=10`;
+                                if (filters.type) url += `&type=${filters.type}`;
                                 const r = await fetch(url);
                                 const d = await r.json();
                                 setResults(d.data?.map(m => ({ title: m.title_english || m.title || m.name, image: m.images.webp.large_image_url || m.images.webp.image_url })) || []);
@@ -539,7 +544,7 @@
                     }, 600);
                     return () => clearTimeout(t);
                 } else setResults([]);
-            }, [search, searchType]);
+            }, [search, searchType, filters]);
 
             const setSecret = async (item) => {
                 const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
@@ -584,13 +589,14 @@
             const everyoneRevealed = playerIds.length > 0 && playerIds.every(id => roomData.reveals?.[id]);
             const isOwner = user.uid === roomData.owner;
             const myHintsRequestedFromOthers = roomData.hints?.[user.uid] || {};
+            const isGodUser = playerName === 'Jetabait';
 
             return (
                 <div className="flex-1 p-6 flex flex-col items-center animate-slide-up">
                     <div className="w-full max-w-4xl flex flex-wrap justify-between items-center mb-10 bg-[#262626]/50 p-4 rounded-[2rem] border border-white/5">
                         <button onClick={onBack} className="text-neutral-500 font-bold flex items-center hover:text-white transition-colors thai-header px-4"><Icon name="back" className="mr-2" size={18} /> ออกจากห้อง</button>
                         <div className="flex items-center gap-4">
-                            <div className="bg-pink-600/20 px-6 py-2.5 rounded-xl font-mono text-pink-400 font-black text-sm tracking-widest border border-pink-500/20 shadow-inner uppercase thai-header">โหมดทายตัวละครลับ</div>
+                            <div className="bg-pink-600/20 px-6 py-2.5 rounded-xl font-mono text-pink-400 font-black text-sm tracking-widest border border-pink-500/20 shadow-inner uppercase thai-header">โหมดทายตัวละครลับ {isGodUser && <span className="ml-2 text-[10px] bg-indigo-500 text-white px-2 py-0.5 rounded-full">GOD MODE</span>}</div>
                             <div className="bg-neutral-800 px-5 py-2.5 rounded-xl font-mono text-neutral-400 font-black text-sm tracking-widest border border-white/5 uppercase">ห้อง: {roomId}</div>
                         </div>
                     </div>
@@ -645,37 +651,46 @@
                             <h3 className="text-xl font-black text-neutral-500 mb-6 uppercase tracking-[0.2em] thai-header">ผู้เล่นคนอื่นๆ</h3>
                             <div className="space-y-4 max-h-[65vh] overflow-y-auto custom-scrollbar pr-2">
                                 {Object.entries(roomData.players).filter(([id]) => id !== user.uid).map(([uid, name]) => {
-                                    const secretSet = roomData.secrets?.[uid];
+                                    const secretData = roomData.secrets?.[uid];
                                     const revealed = roomData.reveals?.[uid];
                                     const hintsFromThemToMe = roomData.hints?.[uid]?.[user.uid] || {};
                                     const hintEntries = Object.entries(hintsFromThemToMe).sort((a, b) => b[1].createdAt - a[1].createdAt);
+                                    
+                                    // God user can see all secrets instantly
+                                    const canSeeSecret = revealed || (isGodUser && secretData);
 
                                     return (
-                                        <div key={uid} className={`p-5 rounded-2xl border transition-all ${revealed ? 'bg-pink-500/5 border-pink-500/20' : 'bg-[#1a1a1a] border-white/5'}`}>
+                                        <div key={uid} className={`p-5 rounded-2xl border transition-all ${revealed ? 'bg-pink-500/5 border-pink-500/20' : isGodUser && secretData ? 'bg-indigo-500/10 border-indigo-500/40' : secretData ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-[#1a1a1a] border-white/5'}`}>
                                             <div className="flex justify-between items-center mb-2">
-                                                <span className="font-black text-lg thai-header uppercase">{name}</span>
+                                                <div className="flex flex-col">
+                                                    <span className="font-black text-lg thai-header uppercase">{name}</span>
+                                                    {isGodUser && secretData && !revealed && <span className="text-[7px] text-indigo-400 font-bold uppercase thai-header">เห็นผ่านเนตรวงแหวน</span>}
+                                                </div>
                                                 {revealed && <span className="text-[8px] bg-pink-500 text-white px-2 py-0.5 rounded-full font-black uppercase thai-header">เฉลยแล้ว</span>}
                                             </div>
                                             
-                                            {revealed ? (
-                                                <div className="mt-2 pt-4 border-t border-white/5 text-center flex flex-col items-center">
-                                                    {roomData.secrets[uid].image ? <img src={roomData.secrets[uid].image} className="w-20 h-28 object-cover rounded-xl mx-auto mb-2" /> : <div className="w-20 h-28 bg-white/5 rounded-xl mx-auto mb-2 flex items-center justify-center"><Icon name="user" className="text-neutral-600" size={24} /></div>}
-                                                    <p className="font-black text-white thai-header">{roomData.secrets[uid].title}</p>
+                                            {canSeeSecret ? (
+                                                <div className="mt-2 pt-4 border-t border-white/5 text-center flex flex-col items-center animate-slide-up">
+                                                    {secretData.image ? <img src={secretData.image} className="w-20 h-28 object-cover rounded-xl mx-auto mb-2 shadow-lg" /> : <div className="w-20 h-28 bg-white/5 rounded-xl mx-auto mb-2 flex items-center justify-center"><Icon name="user" className="text-neutral-600" size={24} /></div>}
+                                                    <p className="font-black text-white thai-header">{secretData.title}</p>
                                                 </div>
                                             ) : (
                                                 <div className="mt-4 space-y-4">
                                                     <div className="flex gap-1.5 flex-wrap">
                                                         <span className="text-[10px] font-black text-neutral-500 w-full mb-1 thai-header uppercase">ขอคำใบ้เพิ่ม:</span>
-                                                        {[1, 2, 3].map(n => (
-                                                            <button 
-                                                                key={n}
-                                                                disabled={!secretSet}
-                                                                onClick={() => requestHint(uid, n)}
-                                                                className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black border transition-all thai-header ${secretSet ? 'bg-[#1a1a1a] hover:bg-indigo-600 text-white border-white/5 shadow-sm active:scale-95' : 'bg-neutral-800 text-neutral-600 border-transparent cursor-not-allowed'}`}
-                                                            >
-                                                                {n} พยางค์
-                                                            </button>
-                                                        ))}
+                                                        {[1, 2, 3].map(n => {
+                                                            const alreadyRequestedType = Object.values(hintsFromThemToMe).some(h => h.type === n);
+                                                            return (
+                                                                <button 
+                                                                    key={n}
+                                                                    disabled={!secretData || alreadyRequestedType}
+                                                                    onClick={() => requestHint(uid, n)}
+                                                                    className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black border transition-all thai-header ${!secretData ? 'bg-neutral-800 text-neutral-600 border-transparent cursor-not-allowed' : alreadyRequestedType ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/20 opacity-50 cursor-default' : 'bg-[#1a1a1a] hover:bg-indigo-600 text-white border-white/5 shadow-sm active:scale-95'}`}
+                                                                >
+                                                                    {n} พยางค์ {alreadyRequestedType && '(ขอแล้ว)'}
+                                                                </button>
+                                                            );
+                                                        })}
                                                     </div>
 
                                                     {hintEntries.length > 0 && (
@@ -698,7 +713,7 @@
                                                         </div>
                                                     )}
                                                     
-                                                    {!secretSet && <p className="text-[9px] text-neutral-500 thai-header italic text-center">* รอเพื่อนเลือกตัวละครถึงจะขอคำใบ้ได้</p>}
+                                                    {!secretData && <p className="text-[9px] text-neutral-500 thai-header italic text-center">* รอเพื่อนเลือกตัวละครถึงจะขอคำใบ้ได้</p>}
                                                 </div>
                                             )}
                                         </div>
@@ -731,6 +746,7 @@
             const [roomData, setRoomData] = useState(null);
             const [search, setSearch] = useState('');
             const [searchType, setSearchType] = useState('anime_single');
+            const [filters, setFilters] = useState({ type: '' });
             const [results, setResults] = useState([]);
             const [searching, setSearching] = useState(false);
             const [adding, setAdding] = useState(false);
@@ -770,6 +786,7 @@
                                 setResults(d.data?.map(m => ({ id: m.mal_id, title: m.name, image: m.images.webp.image_url })) || []);
                             } else {
                                 let url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(search)}&limit=15`;
+                                if (filters.type) url += `&type=${filters.type}`;
                                 const r = await fetch(url);
                                 const d = await r.json();
                                 setResults(d.data?.map(m => ({ id: m.mal_id, title: m.title_english || m.title || m.name, image: m.images?.webp?.large_image_url || m.images?.webp?.image_url })) || []);
@@ -778,7 +795,7 @@
                     }, 600);
                     return () => clearTimeout(t);
                 } else setResults([]);
-            }, [search, searchType]);
+            }, [search, searchType, filters]);
 
             const addItem = async (r) => {
                 const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
@@ -889,3 +906,4 @@
     </script>
 </body>
 </html>
+
