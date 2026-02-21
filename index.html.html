@@ -131,7 +131,6 @@
                             } catch (e) { console.error(e); }
                         }
                     }, 100);
-                    return () => clearInterval(checkSDK);
                 };
                 init();
             }, []);
@@ -171,7 +170,7 @@
                         <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-indigo-500/20 transition-colors">
                             <Icon name="grid" size={24} className="text-indigo-400" />
                         </div>
-                        <h3 className="text-2xl font-bold mb-1 text-white">Anime Grid</h3>
+                        <h3 className="text-2xl font-extrabold mb-1 text-white">Anime Grid</h3>
                         <p className="text-neutral-500 text-sm font-medium leading-relaxed">เติมชื่ออนิเมะลงตารางบิงโก</p>
                     </button>
                 </div>
@@ -239,10 +238,7 @@
                     if (snap.exists()) {
                         await fb.updateDoc(roomRef, { [`players.${user.uid}`]: playerName });
                         onJoin(roomCode.toUpperCase());
-                    } else { 
-                        // Custom Modal equivalent or simple text indicator for UI feedback
-                        setLoading(false);
-                    }
+                    } else { setLoading(false); }
                 } catch (e) { console.error(e); setLoading(false); }
             };
             return (
@@ -307,29 +303,30 @@
 
             useEffect(() => {
                 if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-                if (search.trim().length > 1) {
+                if (search.trim().length > 0) {
                     searchTimerRef.current = setTimeout(() => {
                         handleSearchFlow();
                     }, 500);
                 } else {
                     setResults([]);
                     setIsAITranslating(false);
+                    setSearching(false);
                 }
                 return () => clearTimeout(searchTimerRef.current);
             }, [search, searchType]);
 
             async function translateName(thaiName) {
-                const apiKey = "";
-                const systemPrompt = "Translate the following Thai anime or character name to its official English or Romaji name. Return ONLY the translated name. Example: หนวดดำ -> Blackbeard";
-                const userQuery = thaiName;
-
-                const callApi = async (delay = 1000, attempt = 0) => {
+                const apiKey = ""; 
+                const systemPrompt = "Translate Thai anime or character name to its official English or Romaji name. Return ONLY the translated name. Example: หนวดดำ -> Blackbeard";
+                
+                // Exponential Backoff Implementation
+                const callWithRetry = async (delay = 1000, attempt = 0) => {
                     try {
                         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                contents: [{ parts: [{ text: userQuery }] }],
+                                contents: [{ parts: [{ text: thaiName }] }],
                                 systemInstruction: { parts: [{ text: systemPrompt }] }
                             })
                         });
@@ -337,14 +334,14 @@
                         const result = await response.json();
                         return result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || thaiName;
                     } catch (e) {
-                        if (attempt < 5) {
+                        if (attempt < 4) { // Retry up to 5 times
                             await new Promise(r => setTimeout(r, delay));
-                            return callApi(delay * 2, attempt + 1);
+                            return callWithRetry(delay * 2, attempt + 1);
                         }
                         return thaiName;
                     }
                 };
-                return callApi();
+                return callWithRetry();
             }
 
             async function handleSearchFlow() {
@@ -430,11 +427,11 @@
                         </button>
                         {roomId && (
                             <div className="flex items-center gap-4">
-                                <div className="bg-[#262626] border border-white/5 px-6 py-3 rounded-2xl text-lg font-bold text-neutral-300 flex items-center shadow-lg">
-                                    <Icon name="users" size={20} className="mr-3 text-indigo-400" />
+                                <div className="bg-[#262626] border border-white/5 px-6 py-4 rounded-3xl text-xl font-bold text-neutral-200 flex items-center shadow-lg">
+                                    <Icon name="users" size={24} className="mr-3 text-indigo-400" />
                                     {Object.values(players).join(', ')}
                                 </div>
-                                <div className="bg-indigo-600/20 border border-indigo-500/30 px-6 py-3 rounded-2xl text-lg font-mono font-black text-indigo-400 shadow-indigo-500/10 shadow-lg tracking-wider">
+                                <div className="bg-indigo-600/20 border border-indigo-500/30 px-6 py-4 rounded-3xl text-xl font-mono font-black text-indigo-400 shadow-indigo-500/10 shadow-lg tracking-widest">
                                     ROOM: {roomId}
                                 </div>
                             </div>
@@ -448,7 +445,7 @@
                                 <div className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest font-bold">เลือกขนาดตาราง</div>
                                 <div className="flex items-center justify-center gap-3">
                                     {[3, 4, 5].map(s => (
-                                        <button key={s} onClick={() => changeSize(s)} className={`w-12 h-12 rounded-2xl text-xs font-bold transition-all shadow-md ${gridSize === s ? 'bg-indigo-600 text-white scale-110 shadow-indigo-500/20' : 'bg-[#262626] text-neutral-600 hover:text-neutral-300'}`}>
+                                        <button key={s} onClick={() => changeSize(s)} className={`w-14 h-14 rounded-2xl text-sm font-bold transition-all shadow-md ${gridSize === s ? 'bg-indigo-600 text-white scale-110 shadow-indigo-500/20' : 'bg-[#262626] text-neutral-600 hover:text-neutral-300'}`}>
                                             {s}x{s}
                                         </button>
                                     ))}
@@ -489,17 +486,12 @@
                     </div>
                     
                     {!showResetConfirm ? (
-                        <button 
-                            onClick={() => setShowResetConfirm(true)} 
-                            className="mt-12 text-neutral-700 hover:text-red-400 transition-colors text-[10px] font-bold uppercase tracking-[0.2em] px-6 py-2 rounded-xl font-bold"
-                        >
-                            Reset Grid Data
-                        </button>
+                        <button onClick={() => setShowResetConfirm(true)} className="mt-12 text-neutral-700 hover:text-red-400 transition-colors text-[10px] font-bold uppercase tracking-[0.2em] px-6 py-2 rounded-xl font-bold">Reset Grid Data</button>
                     ) : (
                         <div className="mt-12 flex items-center gap-4 animate-slide-up">
                             <span className="text-red-400 text-[10px] font-bold uppercase tracking-widest">ยืนยันล้างกระดาน?</span>
-                            <button onClick={() => changeSize(gridSize)} className="text-white bg-red-600 px-4 py-1 rounded-lg text-[10px] font-bold">ตกลง</button>
-                            <button onClick={() => setShowResetConfirm(false)} className="text-neutral-500 text-[10px] font-bold">ยกเลิก</button>
+                            <button onClick={() => changeSize(gridSize)} className="text-white bg-red-600 px-5 py-2 rounded-xl text-xs font-bold shadow-lg">ล้างทั้งหมด</button>
+                            <button onClick={() => setShowResetConfirm(false)} className="text-neutral-500 text-xs font-bold hover:text-white px-3 py-2 transition-colors">ยกเลิก</button>
                         </div>
                     )}
                     
@@ -518,16 +510,17 @@
                                     <div className="mb-8 relative">
                                         <input autoFocus value={search} onChange={e => setSearch(e.target.value)} className={`w-full bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 focus:outline-none focus:ring-2 transition-all shadow-inner font-medium text-lg ${searchType === 'anime' ? 'focus:ring-indigo-500/30' : 'focus:ring-pink-500/30'}`} placeholder={searchType === 'anime' ? "พิมพ์ชื่อไทยหรืออังกฤษ..." : "พิมพ์ชื่อตัวละคร..."} />
                                         {isAITranslating && (
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[10px] font-bold text-indigo-400 bg-[#262626] px-3 py-1 rounded-full shadow-sm animate-pulse">
-                                                <Icon name="sparkles" size={12} /> AI กำลังแปลชื่อ...
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[10px] font-bold text-indigo-400 bg-[#262626] px-3 py-2 rounded-full shadow-sm animate-pulse border border-indigo-500/20">
+                                                <Icon name="sparkles" size={14} /> AI กำลังแปลชื่อ...
                                             </div>
                                         )}
                                     </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto max-h-[45vh] pr-2 custom-scrollbar">
-                                        {(searching || isAITranslating) && <div className="col-span-full py-10 text-center text-indigo-400 font-bold animate-pulse">กำลังค้นหาข้อมูล...</div>}
+                                        {(searching || isAITranslating) && <div className="col-span-full py-10 text-center text-indigo-400 font-bold animate-pulse text-lg">กำลังค้นหาข้อมูล...</div>}
                                         {results.map(item => (
                                             <button key={item.id} onClick={() => selectItem(item)} className="group text-left animate-slide-up"><div className="aspect-[3/4] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] shadow-lg border border-white/5"><img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform" /></div><p className="text-[10px] font-bold text-neutral-400 group-hover:text-white transition-colors line-clamp-2 leading-tight font-bold">{item.title}</p></button>
                                         ))}
+                                        {!searching && !isAITranslating && results.length === 0 && search.trim() !== "" && <div className="col-span-full py-10 text-center text-neutral-700 italic">ไม่พบข้อมูลที่ค้นหา</div>}
                                     </div>
                                 </div>
                             </div>
