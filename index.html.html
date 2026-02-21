@@ -40,6 +40,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDy3A8XwrKA-BXjlueZzzTa5BQ1R1SFVzk",
             authDomain: "game-hub-jetabait.firebaseapp.com",
@@ -151,9 +152,34 @@
             return (
                 <div className="min-h-screen flex flex-col bg-[#171717]">
                     {screen === 'hub' && <Hub onSelect={() => setScreen('menu')} />}
-                    {screen === 'menu' && <Menu onLocal={() => { setRoomId(''); setScreen('game'); }} onMulti={() => setScreen('lobby')} onBack={() => setScreen('hub')} />}
-                    {screen === 'lobby' && <Lobby fb={fbServices} appId={appId} onBack={() => setScreen('menu')} onJoin={(id) => { setRoomId(id); setScreen('game'); }} user={user} playerName={playerName} setPlayerName={setPlayerName} />}
-                    {screen === 'game' && <Game fb={fbServices} appId={appId} roomId={roomId} onBack={() => setScreen('menu')} user={user} playerName={playerName} />}
+                    {screen === 'menu' && (
+                        <Menu 
+                            onLocal={() => { setRoomId(''); setScreen('game'); }} 
+                            onMulti={() => setScreen('lobby')} 
+                            onBack={() => setScreen('hub')} 
+                        />
+                    )}
+                    {screen === 'lobby' && (
+                        <Lobby 
+                            fb={fbServices} 
+                            appId={appId}
+                            onBack={() => setScreen('menu')} 
+                            onJoin={(id) => { setRoomId(id); setScreen('game'); }} 
+                            user={user} 
+                            playerName={playerName} 
+                            setPlayerName={setPlayerName} 
+                        />
+                    )}
+                    {screen === 'game' && (
+                        <Game 
+                            fb={fbServices} 
+                            appId={appId} 
+                            roomId={roomId} 
+                            onBack={() => setScreen('menu')} 
+                            user={user} 
+                            playerName={playerName} 
+                        />
+                    )}
                 </div>
             );
         }
@@ -164,13 +190,13 @@
                     <div className="w-16 h-16 bg-[#262626] rounded-2xl flex items-center justify-center mb-8 border border-white/5 shadow-xl">
                         <Icon name="gamepad" size={32} className="text-indigo-400" />
                     </div>
-                    <h1 className="text-6xl font-extrabold text-gradient mb-4 leading-tight">Game Hub</h1>
-                    <p className="text-neutral-500 mb-12 text-center max-w-sm font-medium">ยินดีต้อนรับสู่ศูนย์รวมมินิเกมสายอนิเมะ</p>
+                    <h1 className="text-6xl font-extrabold text-gradient mb-4 leading-tight tracking-tighter">Game Hub</h1>
+                    <p className="text-neutral-500 mb-12 text-center max-w-sm font-medium">ศูนย์รวมมินิเกมสายอนิเมะ</p>
                     <button onClick={onSelect} className="w-full max-w-sm bg-[#262626] p-8 rounded-[2.5rem] border border-white/5 hover:border-indigo-500/30 transition-all text-left group shadow-lg">
                         <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-indigo-500/20 transition-colors">
                             <Icon name="grid" size={24} className="text-indigo-400" />
                         </div>
-                        <h3 className="text-2xl font-bold mb-1 text-white">Anime Grid</h3>
+                        <h3 className="text-2xl font-extrabold mb-1 text-white">Anime Grid</h3>
                         <p className="text-neutral-500 text-sm font-medium leading-relaxed">เติมชื่ออนิเมะลงตารางบิงโก</p>
                     </button>
                 </div>
@@ -238,11 +264,11 @@
                     if (snap.exists()) {
                         await fb.updateDoc(roomRef, { [`players.${user.uid}`]: playerName });
                         onJoin(roomCode.toUpperCase());
-                    } else { setLoading(false); }
+                    } else { alert("ไม่พบรหัสห้องที่ระบุ"); setLoading(false); }
                 } catch (e) { console.error(e); setLoading(false); }
             };
             return (
-                <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up bg-[#171717]">
+                <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up">
                     <div className="w-full max-w-[32rem]">
                         <button onClick={onBack} className="text-neutral-500 hover:text-white mb-8 flex items-center text-sm font-medium">
                             <Icon name="back" size={16} className="mr-2" /> กลับหน้าเลือกโหมด
@@ -251,7 +277,7 @@
                             <h2 className="text-[2rem] font-extrabold mb-10 text-center text-white tracking-tight">ระบบห้องเล่นด้วยกัน</h2>
                             <div className="space-y-8">
                                 <div className="space-y-3">
-                                    <label className="text-sm font-medium text-neutral-400 px-1 font-bold">ชื่อของคุณ (แสดงในห้อง)</label>
+                                    <label className="text-sm font-medium text-neutral-400 px-1 font-bold tracking-tight">ชื่อของคุณ (แสดงในห้อง)</label>
                                     <input value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white transition-all text-lg font-medium" placeholder="ใส่ชื่อของคุณ..." />
                                 </div>
                                 <button onClick={handleCreate} disabled={loading || !playerName} className="w-full btn-primary py-5 rounded-2xl font-extrabold text-xl disabled:opacity-50 text-white shadow-xl shadow-indigo-500/10 transition-all">
@@ -259,7 +285,7 @@
                                 </button>
                                 <div className="relative py-4 flex items-center justify-center"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div><span className="relative px-4 bg-[#262626] text-neutral-600 text-sm font-medium uppercase tracking-widest font-bold">หรือ</span></div>
                                 <div className="space-y-3">
-                                    <label className="text-sm font-medium text-neutral-400 px-1 font-bold">เข้าร่วมห้องเพื่อน</label>
+                                    <label className="text-sm font-medium text-neutral-400 px-1 font-bold tracking-tight">เข้าร่วมห้องเพื่อน</label>
                                     <div className="flex gap-3">
                                         <input value={roomCode} onChange={e => setRoomCode(e.target.value.toUpperCase())} className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 font-mono focus:outline-none text-white uppercase tracking-widest text-lg font-bold" placeholder="ใส่รหัสห้อง (เช่น KON)" />
                                         <button onClick={handleJoin} disabled={loading || !playerName || !roomCode} className="bg-[#333333] hover:bg-[#3d3d3d] px-8 rounded-2xl font-bold text-lg text-[#737373] hover:text-white transition-all">เข้าห้อง</button>
@@ -316,14 +342,9 @@
             }, [search, searchType]);
 
             async function translateName(thaiName) {
-                // พี่เตือนน้องนะนะ: ถ้าเปิดใน Vercel แล้วแปลไม่ได้ น้องต้องใส่ API Key ของตัวเองตรงนี้นะน้องนะ
-                const apiKey = ""; 
+                // น้องใส่ API Key เรียบร้อยแล้วนะน้องนะ
+                const apiKey = "AIzaSyA_pRHkR3u3-8Et_1jFFqAZesM4vLkwKzo"; 
                 
-                // ถ้ารหัสว่างและรันนอก Gemini ระบบแปลภาษาไทยจะข้ามไปค้นหาตรงๆ เลยนะน้องนะ
-                if (apiKey === "" && !window.location.hostname.includes('gemini')) {
-                    return thaiName;
-                }
-
                 const systemPrompt = "Translate Thai anime or character name to its official English or Romaji name. Return ONLY the translated name. Example: หนวดดำ -> Blackbeard";
                 
                 const callWithRetry = async (delay = 1000, attempt = 0) => {
@@ -462,7 +483,7 @@
 
                     <div className="bg-[#262626] p-4 md:p-12 rounded-[3.5rem] shadow-2xl w-full max-w-[65rem] overflow-x-auto custom-scrollbar border border-white/5">
                         <div className={`grid ${gridCols} gap-4 md:gap-6 min-w-[700px]`}>
-                            {/* ช่องซ้ายบนว่างเปล่าตามสั่ง */}
+                            {/* มุมซ้ายบนว่างเปล่า */}
                             <div className="aspect-square"></div>
                             
                             {CATEGORIES.top.slice(0, gridSize).map((cat, i) => (
