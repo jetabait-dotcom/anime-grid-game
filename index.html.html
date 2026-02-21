@@ -40,7 +40,6 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Configuration for game-hub-jetabait
         const firebaseConfig = {
             apiKey: "AIzaSyDy3A8XwrKA-BXjlueZzzTa5BQ1R1SFVzk",
             authDomain: "game-hub-jetabait.firebaseapp.com",
@@ -152,34 +151,9 @@
             return (
                 <div className="min-h-screen flex flex-col bg-[#171717]">
                     {screen === 'hub' && <Hub onSelect={() => setScreen('menu')} />}
-                    {screen === 'menu' && (
-                        <Menu 
-                            onLocal={() => { setRoomId(''); setScreen('game'); }} 
-                            onMulti={() => setScreen('lobby')} 
-                            onBack={() => setScreen('hub')} 
-                        />
-                    )}
-                    {screen === 'lobby' && (
-                        <Lobby 
-                            fb={fbServices} 
-                            appId={appId}
-                            onBack={() => setScreen('menu')} 
-                            onJoin={(id) => { setRoomId(id); setScreen('game'); }} 
-                            user={user} 
-                            playerName={playerName} 
-                            setPlayerName={setPlayerName} 
-                        />
-                    )}
-                    {screen === 'game' && (
-                        <Game 
-                            fb={fbServices} 
-                            appId={appId} 
-                            roomId={roomId} 
-                            onBack={() => setScreen('menu')} 
-                            user={user} 
-                            playerName={playerName} 
-                        />
-                    )}
+                    {screen === 'menu' && <Menu onLocal={() => { setRoomId(''); setScreen('game'); }} onMulti={() => setScreen('lobby')} onBack={() => setScreen('hub')} />}
+                    {screen === 'lobby' && <Lobby fb={fbServices} appId={appId} onBack={() => setScreen('menu')} onJoin={(id) => { setRoomId(id); setScreen('game'); }} user={user} playerName={playerName} setPlayerName={setPlayerName} />}
+                    {screen === 'game' && <Game fb={fbServices} appId={appId} roomId={roomId} onBack={() => setScreen('menu')} user={user} playerName={playerName} />}
                 </div>
             );
         }
@@ -190,14 +164,14 @@
                     <div className="w-16 h-16 bg-[#262626] rounded-2xl flex items-center justify-center mb-8 border border-white/5 shadow-xl">
                         <Icon name="gamepad" size={32} className="text-indigo-400" />
                     </div>
-                    <h1 className="text-6xl font-extrabold text-gradient mb-4 leading-tight tracking-tighter">Game Hub</h1>
-                    <p className="text-neutral-500 mb-12 text-center max-w-sm font-medium">ศูนย์รวมมินิเกมสายอนิเมะ</p>
+                    <h1 className="text-6xl font-extrabold text-gradient mb-4 leading-tight">Game Hub</h1>
+                    <p className="text-neutral-500 mb-12 text-center max-w-sm font-medium">ยินดีต้อนรับสู่ศูนย์รวมมินิเกมสายอนิเมะ</p>
                     <button onClick={onSelect} className="w-full max-w-sm bg-[#262626] p-8 rounded-[2.5rem] border border-white/5 hover:border-indigo-500/30 transition-all text-left group shadow-lg">
                         <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-indigo-500/20 transition-colors">
                             <Icon name="grid" size={24} className="text-indigo-400" />
                         </div>
                         <h3 className="text-2xl font-extrabold mb-1 text-white">Anime Grid</h3>
-                        <p className="text-neutral-500 text-sm font-medium leading-relaxed font-bold">เติมชื่ออนิเมะลงตารางบิงโก</p>
+                        <p className="text-neutral-500 text-sm font-medium leading-relaxed">เติมชื่ออนิเมะลงตารางบิงโก</p>
                     </button>
                 </div>
             );
@@ -225,11 +199,11 @@
                             <div className="mb-6 flex items-center justify-center">
                                 <Icon name="users" size={42} className="text-[#818cf8] group-hover:scale-110 transition-transform" />
                             </div>
-                            <h3 className="text-2xl font-bold mb-3 text-white font-bold">เล่นกับเพื่อน (ออนไลน์)</h3>
+                            <h3 className="text-2xl font-bold mb-3 text-white">เล่นกับเพื่อน (ออนไลน์)</h3>
                             <p className="text-neutral-400/50 text-sm font-medium max-w-[15rem]">สร้างห้องหรือใส่รหัสเพื่อเล่นตารางเดียวกันแบบเรียลไทม์</p>
                         </button>
                     </div>
-                    <button onClick={onBack} className="mt-16 text-neutral-600 hover:text-white transition-colors text-sm font-bold flex items-center font-bold">
+                    <button onClick={onBack} className="mt-16 text-neutral-600 hover:text-white transition-colors text-sm font-bold flex items-center">
                         <Icon name="back" size={16} className="mr-2" /> กลับไปหน้าหลัก
                     </button>
                 </div>
@@ -264,31 +238,31 @@
                     if (snap.exists()) {
                         await fb.updateDoc(roomRef, { [`players.${user.uid}`]: playerName });
                         onJoin(roomCode.toUpperCase());
-                    } else { alert("ไม่พบรหัสห้องที่ระบุ"); setLoading(false); }
+                    } else { setLoading(false); }
                 } catch (e) { console.error(e); setLoading(false); }
             };
             return (
-                <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up">
+                <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up bg-[#171717]">
                     <div className="w-full max-w-[32rem]">
-                        <button onClick={onBack} className="text-neutral-500 hover:text-white mb-8 flex items-center text-sm font-medium font-bold">
+                        <button onClick={onBack} className="text-neutral-500 hover:text-white mb-8 flex items-center text-sm font-medium">
                             <Icon name="back" size={16} className="mr-2" /> กลับหน้าเลือกโหมด
                         </button>
-                        <div className="bg-[#262626] p-12 rounded-[2.5rem] shadow-2xl border border-white/5 font-bold">
+                        <div className="bg-[#262626] p-12 rounded-[2.5rem] shadow-2xl border border-white/5">
                             <h2 className="text-[2rem] font-extrabold mb-10 text-center text-white tracking-tight">ระบบห้องเล่นด้วยกัน</h2>
-                            <div className="space-y-8 font-bold">
-                                <div className="space-y-3 font-bold">
-                                    <label className="text-sm font-medium text-neutral-400 px-1 font-bold tracking-tight">ชื่อของคุณ (แสดงในห้อง)</label>
-                                    <input value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white transition-all text-lg font-medium font-bold" placeholder="ใส่ชื่อของคุณ..." />
+                            <div className="space-y-8">
+                                <div className="space-y-3">
+                                    <label className="text-sm font-medium text-neutral-400 px-1 font-bold">ชื่อของคุณ (แสดงในห้อง)</label>
+                                    <input value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white transition-all text-lg font-medium" placeholder="ใส่ชื่อของคุณ..." />
                                 </div>
-                                <button onClick={handleCreate} disabled={loading || !playerName} className="w-full btn-primary py-5 rounded-2xl font-extrabold text-xl disabled:opacity-50 text-white shadow-xl shadow-indigo-500/10 transition-all font-bold">
+                                <button onClick={handleCreate} disabled={loading || !playerName} className="w-full btn-primary py-5 rounded-2xl font-extrabold text-xl disabled:opacity-50 text-white shadow-xl shadow-indigo-500/10 transition-all">
                                     {loading ? 'กำลังประมวลผล...' : 'สร้างห้องใหม่'}
                                 </button>
-                                <div className="relative py-4 flex items-center justify-center"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div><span className="relative px-4 bg-[#262626] text-neutral-600 text-sm font-medium uppercase tracking-widest font-bold font-bold">หรือ</span></div>
-                                <div className="space-y-3 font-bold">
-                                    <label className="text-sm font-medium text-neutral-400 px-1 font-bold tracking-tight">เข้าร่วมห้องเพื่อน</label>
-                                    <div className="flex gap-3 font-bold">
-                                        <input value={roomCode} onChange={e => setRoomCode(e.target.value.toUpperCase())} className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 font-mono focus:outline-none text-white uppercase tracking-widest text-lg font-bold font-bold" placeholder="ใส่รหัสห้อง (เช่น KON)" />
-                                        <button onClick={handleJoin} disabled={loading || !playerName || !roomCode} className="bg-[#333333] hover:bg-[#3d3d3d] px-8 rounded-2xl font-bold text-lg text-[#737373] hover:text-white transition-all font-bold">เข้าห้อง</button>
+                                <div className="relative py-4 flex items-center justify-center"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div><span className="relative px-4 bg-[#262626] text-neutral-600 text-sm font-medium uppercase tracking-widest font-bold">หรือ</span></div>
+                                <div className="space-y-3">
+                                    <label className="text-sm font-medium text-neutral-400 px-1 font-bold">เข้าร่วมห้องเพื่อน</label>
+                                    <div className="flex gap-3">
+                                        <input value={roomCode} onChange={e => setRoomCode(e.target.value.toUpperCase())} className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 font-mono focus:outline-none text-white uppercase tracking-widest text-lg font-bold" placeholder="ใส่รหัสห้อง (เช่น KON)" />
+                                        <button onClick={handleJoin} disabled={loading || !playerName || !roomCode} className="bg-[#333333] hover:bg-[#3d3d3d] px-8 rounded-2xl font-bold text-lg text-[#737373] hover:text-white transition-all">เข้าห้อง</button>
                                     </div>
                                 </div>
                             </div>
@@ -342,38 +316,29 @@
             }, [search, searchType]);
 
             async function translateName(thaiName) {
-                const apiKey = "AIzaSyA_pRHkR3u3-8Et_1jFFqAZesM4vLkwKzo"; 
-                
-                // ใช้โมเดล gemini-1.5-flash แทนเพื่อความเสถียรบน Vercel
-                const modelName = "gemini-1.5-flash";
+                const apiKey = ""; 
                 const systemPrompt = "Translate Thai anime or character name to its official English or Romaji name. Return ONLY the translated name. Example: หนวดดำ -> Blackbeard";
                 
+                // Exponential Backoff Implementation
                 const callWithRetry = async (delay = 1000, attempt = 0) => {
                     try {
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 วินาที timeout
-
-                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            signal: controller.signal,
                             body: JSON.stringify({
                                 contents: [{ parts: [{ text: thaiName }] }],
                                 systemInstruction: { parts: [{ text: systemPrompt }] }
                             })
                         });
-                        clearTimeout(timeoutId);
-                        
                         if (!response.ok) throw new Error('API Error');
                         const result = await response.json();
                         return result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || thaiName;
                     } catch (e) {
-                        if (attempt < 2) { 
+                        if (attempt < 4) { // Retry up to 5 times
                             await new Promise(r => setTimeout(r, delay));
                             return callWithRetry(delay * 2, attempt + 1);
                         }
-                        console.error("AI Fallback active", e);
-                        return thaiName; // ถ้าล้มเหลวให้ใช้ชื่อไทยค้นหาตรงๆ
+                        return thaiName;
                     }
                 };
                 return callWithRetry();
@@ -457,16 +422,16 @@
             return (
                 <div className="flex-1 p-4 md:p-8 flex flex-col items-center animate-slide-up">
                     <div className="w-full max-w-5xl flex items-center justify-between gap-6 mb-10">
-                        <button onClick={onBack} className="text-neutral-500 hover:text-white flex items-center font-bold transition-colors text-lg font-bold">
-                            <Icon name="back" size={24} className="mr-2 font-bold" /> ออก
+                        <button onClick={onBack} className="text-neutral-500 hover:text-white flex items-center font-bold transition-colors text-lg">
+                            <Icon name="back" size={24} className="mr-2" /> ออก
                         </button>
                         {roomId && (
                             <div className="flex items-center gap-4">
-                                <div className="bg-[#262626] border border-white/5 px-8 py-5 rounded-[2rem] text-2xl font-bold text-neutral-200 flex items-center shadow-2xl font-bold">
-                                    <Icon name="users" size={32} className="mr-4 text-indigo-400 font-bold" />
+                                <div className="bg-[#262626] border border-white/5 px-6 py-4 rounded-3xl text-xl font-bold text-neutral-200 flex items-center shadow-lg">
+                                    <Icon name="users" size={24} className="mr-3 text-indigo-400" />
                                     {Object.values(players).join(', ')}
                                 </div>
-                                <div className="bg-indigo-600/20 border border-indigo-500/30 px-8 py-5 rounded-[2rem] text-2xl font-mono font-black text-indigo-400 shadow-indigo-500/10 shadow-2xl tracking-[0.2em] font-bold">
+                                <div className="bg-indigo-600/20 border border-indigo-500/30 px-6 py-4 rounded-3xl text-xl font-mono font-black text-indigo-400 shadow-indigo-500/10 shadow-lg tracking-widest">
                                     ROOM: {roomId}
                                 </div>
                             </div>
@@ -474,13 +439,13 @@
                     </div>
 
                     <div className="text-center mb-10">
-                        <h2 className="text-[3rem] font-extrabold text-white mb-6 tracking-tight font-bold">Anime Grid</h2>
+                        <h2 className="text-[2.5rem] font-extrabold text-white mb-6 tracking-tight">Anime Grid</h2>
                         {isHost && (
-                            <div className="flex flex-col items-center gap-4 p-5 bg-[#262626]/40 rounded-[2.5rem] border border-white/5 shadow-inner font-bold">
-                                <div className="text-neutral-500 text-xs font-bold uppercase tracking-[0.3em] font-bold font-bold">เลือกขนาดตาราง</div>
-                                <div className="flex items-center justify-center gap-4 font-bold">
+                            <div className="flex flex-col items-center gap-3 p-4 bg-[#262626]/40 rounded-3xl border border-white/5 shadow-inner">
+                                <div className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest font-bold">เลือกขนาดตาราง</div>
+                                <div className="flex items-center justify-center gap-3">
                                     {[3, 4, 5].map(s => (
-                                        <button key={s} onClick={() => changeSize(s)} className={`w-16 h-16 rounded-[1.25rem] text-lg font-bold transition-all shadow-md font-bold ${gridSize === s ? 'bg-indigo-600 text-white scale-110 shadow-indigo-500/30' : 'bg-[#262626] text-neutral-600 hover:text-neutral-300'}`}>
+                                        <button key={s} onClick={() => changeSize(s)} className={`w-14 h-14 rounded-2xl text-sm font-bold transition-all shadow-md ${gridSize === s ? 'bg-indigo-600 text-white scale-110 shadow-indigo-500/20' : 'bg-[#262626] text-neutral-600 hover:text-neutral-300'}`}>
                                             {s}x{s}
                                         </button>
                                     ))}
@@ -489,29 +454,29 @@
                         )}
                     </div>
 
-                    <div className="bg-[#262626] p-4 md:p-12 rounded-[3.5rem] shadow-2xl w-full max-w-[65rem] overflow-x-auto custom-scrollbar border border-white/5 font-bold">
-                        <div className={`grid ${gridCols} gap-4 md:gap-6 min-w-[700px] font-bold`}>
+                    <div className="bg-[#262626] p-4 md:p-10 rounded-[3rem] shadow-2xl w-full max-w-4xl overflow-x-auto custom-scrollbar border border-white/5">
+                        <div className={`grid ${gridCols} gap-3 md:gap-5 min-w-[600px]`}>
                             <div className="aspect-square"></div>
                             {CATEGORIES.top.slice(0, gridSize).map((cat, i) => (
-                                <div key={i} className="aspect-square bg-[#333545] rounded-[1.75rem] flex items-center justify-center p-4 text-center text-xs md:text-sm font-bold text-indigo-300 border border-indigo-500/10 shadow-inner font-bold">{cat}</div>
+                                <div key={i} className="aspect-square bg-[#333545] rounded-3xl flex items-center justify-center p-3 text-center text-[10px] md:text-xs font-bold text-indigo-300 border border-indigo-500/10 shadow-inner">{cat}</div>
                             ))}
                             {CATEGORIES.left.slice(0, gridSize).map((lCat, rowIdx) => (
                                 <React.Fragment key={rowIdx}>
-                                    <div className="aspect-square bg-[#3d2e38] rounded-[1.75rem] flex items-center justify-center p-4 text-center text-xs md:text-sm font-bold text-pink-300 border border-pink-500/10 shadow-inner font-bold">{lCat}</div>
+                                    <div className="aspect-square bg-[#3d2e38] rounded-3xl flex items-center justify-center p-3 text-center text-[10px] md:text-xs font-bold text-pink-300 border border-pink-500/10 shadow-inner">{lCat}</div>
                                     {Array.from({ length: gridSize }).map((_, colIdx) => {
                                         const idx = rowIdx * gridSize + colIdx; const cell = grid[idx];
                                         return (
-                                            <button key={idx} onClick={() => setActiveCell(idx)} className="aspect-square bg-[#1a1a1a] hover:bg-[#222] transition-all rounded-[1.75rem] overflow-hidden group relative border border-white/5 flex flex-col items-center justify-center shadow-inner font-bold">
+                                            <button key={idx} onClick={() => setActiveCell(idx)} className="aspect-square bg-[#1a1a1a] hover:bg-[#222] transition-all rounded-3xl overflow-hidden group relative border border-white/5 flex flex-col items-center justify-center shadow-inner">
                                                 {cell ? (
                                                     <React.Fragment>
                                                         <img src={cell.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent flex flex-col justify-end p-5 opacity-0 group-hover:opacity-100 transition-opacity font-bold">
-                                                            <p className="text-xs font-bold text-white leading-tight truncate font-bold">{cell.title}</p>
-                                                            <p className="text-[10px] text-neutral-500 mt-1 font-medium font-bold">โดย {cell.by}</p>
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <p className="text-[10px] font-bold text-white truncate">{cell.title}</p>
+                                                            <p className="text-[8px] text-neutral-500 mt-1 font-medium">โดย {cell.by}</p>
                                                         </div>
-                                                        <div className="absolute top-3 right-3 bg-[#4ade80] text-black rounded-full p-1.5 shadow-lg font-bold"><Icon name="check" size={14} strokeWidth={4} className="font-bold" /></div>
+                                                        <div className="absolute top-2 right-2 bg-[#4ade80] text-black rounded-full p-1 shadow-lg"><Icon name="check" size={10} strokeWidth={4} /></div>
                                                     </React.Fragment>
-                                                ) : <Icon name="search" size={28} className="text-neutral-800 group-hover:text-indigo-400/50 transition-colors font-bold" />}
+                                                ) : <Icon name="search" size={24} className="text-neutral-800 group-hover:text-indigo-400/50 transition-colors" />}
                                             </button>
                                         );
                                     })}
@@ -521,40 +486,41 @@
                     </div>
                     
                     {!showResetConfirm ? (
-                        <button onClick={() => setShowResetConfirm(true)} className="mt-16 text-neutral-700 hover:text-red-400 transition-colors text-xs font-bold uppercase tracking-[0.3em] px-8 py-3 rounded-2xl font-bold font-bold">Reset Grid Data</button>
+                        <button onClick={() => setShowResetConfirm(true)} className="mt-12 text-neutral-700 hover:text-red-400 transition-colors text-[10px] font-bold uppercase tracking-[0.2em] px-6 py-2 rounded-xl font-bold">Reset Grid Data</button>
                     ) : (
-                        <div className="mt-16 flex items-center gap-6 animate-slide-up bg-[#262626] p-4 rounded-2xl border border-red-500/20 shadow-xl font-bold">
-                            <span className="text-red-400 text-xs font-bold uppercase tracking-widest font-bold">ยืนยันล้างกระดาน?</span>
-                            <button onClick={() => changeSize(gridSize)} className="text-white bg-red-600 px-6 py-2 rounded-xl text-xs font-bold shadow-lg shadow-red-600/20 font-bold">ล้างทั้งหมด</button>
-                            <button onClick={() => setShowResetConfirm(false)} className="text-neutral-500 text-xs font-bold hover:text-white px-4 py-2 transition-colors font-bold">ยกเลิก</button>
+                        <div className="mt-12 flex items-center gap-4 animate-slide-up">
+                            <span className="text-red-400 text-[10px] font-bold uppercase tracking-widest">ยืนยันล้างกระดาน?</span>
+                            <button onClick={() => changeSize(gridSize)} className="text-white bg-red-600 px-5 py-2 rounded-xl text-xs font-bold shadow-lg">ล้างทั้งหมด</button>
+                            <button onClick={() => setShowResetConfirm(false)} className="text-neutral-500 text-xs font-bold hover:text-white px-3 py-2 transition-colors">ยกเลิก</button>
                         </div>
                     )}
                     
                     {activeCell !== null && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
-                            <div className="w-full max-w-2xl bg-[#262626] rounded-[3rem] overflow-hidden flex flex-col max-h-[85vh] shadow-2xl border border-white/5 animate-slide-up font-bold">
-                                <div className="p-10 border-b border-white/5 flex justify-between items-center bg-[#2a2a2a] font-bold">
-                                    <h3 className="text-3xl font-bold text-white tracking-tight font-bold font-bold font-bold">เลือกรายการของคุณ</h3>
-                                    <button onClick={() => setActiveCell(null)} className="p-3 hover:bg-white/5 rounded-full transition-colors text-neutral-500 font-bold"><Icon name="close" size={32} className="font-bold" /></button>
+                            <div className="w-full max-w-xl bg-[#262626] rounded-[2.5rem] overflow-hidden flex flex-col max-h-[85vh] shadow-2xl border border-white/5 animate-slide-up">
+                                <div className="p-8 border-b border-white/5 flex justify-between items-center bg-[#2a2a2a]">
+                                    <h3 className="text-2xl font-bold text-white tracking-tight font-bold">เลือกรายการของคุณ</h3>
+                                    <button onClick={() => setActiveCell(null)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-neutral-500"><Icon name="close" /></button>
                                 </div>
-                                <div className="flex border-b border-white/5 bg-[#1a1a1a] font-bold">
-                                    <button onClick={() => setSearchType('anime')} className={`flex-1 py-6 flex items-center justify-center gap-3 text-lg font-bold transition-all font-bold ${searchType === 'anime' ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-400/5' : 'text-neutral-500 hover:text-neutral-300'}`}><Icon name="playCircle" size={24} className="font-bold" /> อนิเมะ</button>
-                                    <button onClick={() => setSearchType('character')} className={`flex-1 py-6 flex items-center justify-center gap-3 text-lg font-bold transition-all font-bold ${searchType === 'character' ? 'text-pink-400 border-b-2 border-pink-400 bg-pink-400/5' : 'text-neutral-500 hover:text-neutral-300'}`}><Icon name="userCircle" size={24} className="font-bold" /> ตัวละคร</button>
+                                <div className="flex border-b border-white/5 bg-[#1a1a1a]">
+                                    <button onClick={() => setSearchType('anime')} className={`flex-1 py-4 flex items-center justify-center gap-2 font-bold transition-all ${searchType === 'anime' ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-400/5' : 'text-neutral-500 hover:text-neutral-300'}`}><Icon name="playCircle" size={18} /> อนิเมะ</button>
+                                    <button onClick={() => setSearchType('character')} className={`flex-1 py-4 flex items-center justify-center gap-2 font-bold transition-all ${searchType === 'character' ? 'text-pink-400 border-b-2 border-pink-400 bg-pink-400/5' : 'text-neutral-500 hover:text-neutral-300'}`}><Icon name="userCircle" size={18} /> ตัวละคร</button>
                                 </div>
-                                <div className="p-10 font-bold">
-                                    <div className="mb-10 relative font-bold">
-                                        <input autoFocus value={search} onChange={e => setSearch(e.target.value)} className={`w-full bg-[#1a1a1a] border border-white/5 rounded-3xl px-8 py-6 focus:outline-none focus:ring-4 transition-all shadow-inner font-medium text-xl font-bold ${searchType === 'anime' ? 'focus:ring-indigo-500/20' : 'focus:ring-pink-500/20'}`} placeholder={searchType === 'anime' ? "พิมพ์ชื่อเรื่องไทยหรืออังกฤษ..." : "พิมพ์ชื่อตัวละคร..."} />
+                                <div className="p-8">
+                                    <div className="mb-8 relative">
+                                        <input autoFocus value={search} onChange={e => setSearch(e.target.value)} className={`w-full bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 focus:outline-none focus:ring-2 transition-all shadow-inner font-medium text-lg ${searchType === 'anime' ? 'focus:ring-indigo-500/30' : 'focus:ring-pink-500/30'}`} placeholder={searchType === 'anime' ? "พิมพ์ชื่อไทยหรืออังกฤษ..." : "พิมพ์ชื่อตัวละคร..."} />
                                         {isAITranslating && (
-                                            <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3 text-sm font-bold text-indigo-400 bg-[#262626] px-5 py-2 rounded-full shadow-sm animate-pulse border border-indigo-500/20 font-bold">
-                                                <Icon name="sparkles" size={18} className="font-bold" /> AI กำลังแปลชื่อ...
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[10px] font-bold text-indigo-400 bg-[#262626] px-3 py-2 rounded-full shadow-sm animate-pulse border border-indigo-500/20">
+                                                <Icon name="sparkles" size={14} /> AI กำลังแปลชื่อ...
                                             </div>
                                         )}
                                     </div>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 overflow-y-auto max-h-[40vh] pr-4 custom-scrollbar font-bold">
-                                        {(searching || isAITranslating) && <div className="col-span-full py-16 text-center text-indigo-400 font-bold animate-pulse text-xl font-bold">กำลังดึงข้อมูลจากฐานข้อมูล...</div>}
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto max-h-[45vh] pr-2 custom-scrollbar">
+                                        {(searching || isAITranslating) && <div className="col-span-full py-10 text-center text-indigo-400 font-bold animate-pulse text-lg">กำลังค้นหาข้อมูล...</div>}
                                         {results.map(item => (
-                                            <button key={item.id} onClick={() => selectItem(item)} className="group text-left animate-slide-up font-bold"><div className="aspect-[3/4] rounded-[1.5rem] overflow-hidden mb-4 bg-[#1a1a1a] shadow-lg border border-white/5 font-bold"><img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform font-bold" /></div><p className="text-sm font-bold text-neutral-300 group-hover:text-white transition-colors line-clamp-2 leading-tight font-bold font-bold font-bold">{item.title}</p></button>
+                                            <button key={item.id} onClick={() => selectItem(item)} className="group text-left animate-slide-up"><div className="aspect-[3/4] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] shadow-lg border border-white/5"><img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform" /></div><p className="text-[10px] font-bold text-neutral-400 group-hover:text-white transition-colors line-clamp-2 leading-tight font-bold">{item.title}</p></button>
                                         ))}
+                                        {!searching && !isAITranslating && results.length === 0 && search.trim() !== "" && <div className="col-span-full py-10 text-center text-neutral-700 italic">ไม่พบข้อมูลที่ค้นหา</div>}
                                     </div>
                                 </div>
                             </div>
