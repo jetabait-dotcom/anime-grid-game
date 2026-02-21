@@ -295,7 +295,6 @@
             const [activeCell, setActiveCell] = useState(null);
             const [search, setSearch] = useState('');
             const [searchType, setSearchType] = useState('anime');
-            const [filters, setFilters] = useState({ type: '' });
             const [results, setResults] = useState([]);
             const [searching, setSearching] = useState(false);
             const [players, setPlayers] = useState({});
@@ -346,7 +345,6 @@
                                 setResults(d.data?.map(m => ({ id: m.mal_id, title: m.name, image: m.images.webp.image_url })) || []);
                             } else {
                                 let url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(search)}&limit=15`;
-                                if (filters.type) url += `&type=${filters.type}`;
                                 const r = await fetch(url);
                                 const d = await r.json();
                                 setResults(d.data?.map(m => ({ id: m.mal_id, title: m.title_english || m.title || m.name, image: m.images.webp.large_image_url || m.images.webp.image_url })) || []);
@@ -355,7 +353,7 @@
                     }, 600);
                     return () => clearTimeout(timer);
                 } else setResults([]);
-            }, [search, searchType, filters]);
+            }, [search, searchType]);
 
             const changeGridSize = async (newSize) => {
                 if (user.uid !== owner) return;
@@ -485,7 +483,6 @@
                             search={search} setSearch={setSearch} 
                             searchType={searchType} setSearchType={setSearchType}
                             results={results} searching={searching}
-                            filters={filters} setFilters={setFilters}
                             onSelect={selectItem} onCancel={() => setActiveCell(null)}
                         />
                     )}
@@ -498,7 +495,6 @@
             const [roomData, setRoomData] = useState(null);
             const [search, setSearch] = useState('');
             const [searchType, setSearchType] = useState('anime'); 
-            const [filters, setFilters] = useState({ type: '' });
             const [results, setResults] = useState([]);
             const [picking, setPicking] = useState(false);
             const [searching, setSearching] = useState(false);
@@ -535,7 +531,6 @@
                                 setResults(d.data?.map(m => ({ title: m.name, image: m.images.webp.image_url })) || []);
                             } else {
                                 let url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(search)}&limit=10`;
-                                if (filters.type) url += `&type=${filters.type}`;
                                 const r = await fetch(url);
                                 const d = await r.json();
                                 setResults(d.data?.map(m => ({ title: m.title_english || m.title || m.name, image: m.images.webp.large_image_url || m.images.webp.image_url })) || []);
@@ -544,7 +539,7 @@
                     }, 600);
                     return () => clearTimeout(t);
                 } else setResults([]);
-            }, [search, searchType, filters]);
+            }, [search, searchType]);
 
             const setSecret = async (item) => {
                 const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
@@ -589,7 +584,9 @@
             const everyoneRevealed = playerIds.length > 0 && playerIds.every(id => roomData.reveals?.[id]);
             const isOwner = user.uid === roomData.owner;
             const myHintsRequestedFromOthers = roomData.hints?.[user.uid] || {};
-            const isGodUser = playerName === 'Jetabait';
+            
+            // God user check for JETABAIT (Case-insensitive)
+            const isGodUser = playerName && playerName.toLowerCase() === 'jetabait';
 
             return (
                 <div className="flex-1 p-6 flex flex-col items-center animate-slide-up">
@@ -618,6 +615,7 @@
                                 )}
                             </div>
 
+                            {/* My Hint Requests Panel */}
                             {Object.keys(myHintsRequestedFromOthers).some(reqId => Object.values(myHintsRequestedFromOthers[reqId]).some(h => h.status === 'requested')) && (
                                 <div className="bg-[#262626] p-6 rounded-[2rem] border border-indigo-500/30 shadow-2xl animate-slide-up">
                                     <h4 className="text-sm font-black text-indigo-400 mb-4 uppercase tracking-widest flex items-center gap-2 thai-header"><Icon name="message" size={16} /> คำขอคำใบ้จากเพื่อน</h4>
@@ -656,7 +654,6 @@
                                     const hintsFromThemToMe = roomData.hints?.[uid]?.[user.uid] || {};
                                     const hintEntries = Object.entries(hintsFromThemToMe).sort((a, b) => b[1].createdAt - a[1].createdAt);
                                     
-                                    // God user can see all secrets instantly
                                     const canSeeSecret = revealed || (isGodUser && secretData);
 
                                     return (
@@ -880,7 +877,7 @@
                             <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4"><h3 className="text-xl font-bold text-neutral-500 uppercase tracking-widest thai-header">คลังรายการ (ยังไม่จัดอันดับ)</h3></div>
                             <div onDragOver={e => { e.preventDefault(); setDragOverTierId('unranked'); }} onDragLeave={() => setDragOverTierId(null)} onDrop={e => onDropOnTier(e, 'unranked')} className={`flex flex-wrap gap-6 min-h-[180px] p-8 bg-[#1a1a1a] rounded-[3rem] border border-white/5 shadow-inner transition-all ${dragOverTierId === 'unranked' ? 'drag-over' : ''}`}>{(roomData.tierItems || []).filter(i => i.tier === 'unranked').map(item => (
                                 <div key={item.instanceId} draggable onDragStart={e => onDragStart(e, item.instanceId)} className="relative group/item cursor-grab active:cursor-grabbing transition-all">
-                                    <img src={item.image} className="w-24 h-32 object-cover rounded-xl shadow-lg border border-white/5 group-hover/item:scale-105 transition-transform" />
+                                    <img src={item.image} className="w-24 h-32 object-cover rounded-xl shadow-lg border border-white/5 group-hover/item:scale-110 transition-transform" />
                                     <p className="text-[10px] text-center mt-2 font-bold text-neutral-500 line-clamp-1 w-24 thai-header uppercase">{item.title}</p>
                                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/item:opacity-100 transition-opacity flex flex-col items-center justify-center rounded-xl"><button onClick={() => {const f = roomData.tierItems.filter(i => i.instanceId !== item.instanceId); fb.updateDoc(fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId), { tierItems: f });}} className="bg-red-500 text-white p-2 rounded-full shadow-lg"><Icon name="close" size={18} /></button></div>
                                 </div>
