@@ -40,7 +40,16 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // Firebase Config ของน้อง
+        const firebaseConfig = {
+            apiKey: "AIzaSyDy3A8XwrKA-BXjlueZzzTa5BQ1R1SFVzk",
+            authDomain: "game-hub-jetabait.firebaseapp.com",
+            projectId: "game-hub-jetabait",
+            storageBucket: "game-hub-jetabait.firebasestorage.app",
+            messagingSenderId: "788930921640",
+            appId: "1:788930921640:web:f54c7d47012b4f50a0ee9d",
+            measurementId: "G-TL5GQ6BX61"
+        };
 
         try {
             const app = initializeApp(firebaseConfig);
@@ -104,11 +113,8 @@
                             const sdk = window.FirebaseSDK;
                             try {
                                 const auth = sdk.auth;
-                                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                                    await sdk.signInWithCustomToken(auth, __initial_auth_token);
-                                } else {
-                                    await sdk.signInAnonymously(auth);
-                                }
+                                
+                                // ตั้งค่า Listener รอดูสถานะ Auth
                                 sdk.onAuthStateChanged(auth, (u) => {
                                     if (u) {
                                         setUser(u);
@@ -116,7 +122,29 @@
                                         setIsReady(true);
                                     }
                                 });
-                            } catch (e) { console.error(e); }
+
+                                // จัดการ Sign-in โดยมี Try-Catch เพื่อแก้ปัญหา Custom Token Mismatch
+                                const performSignIn = async () => {
+                                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                        try {
+                                            await sdk.signInWithCustomToken(auth, __initial_auth_token);
+                                        } catch (tokenErr) {
+                                            // หาก Token ไม่ตรงกับ Config (เช่น กรณีใส่ Config เอง) ให้ Fallback ไปใช้ Anonymous
+                                            console.warn("Custom token mismatch, falling back to anonymous sign-in.");
+                                            await sdk.signInAnonymously(auth);
+                                        }
+                                    } else {
+                                        await sdk.signInAnonymously(auth);
+                                    }
+                                };
+                                
+                                await performSignIn();
+
+                            } catch (e) { 
+                                console.error("Initialization Error:", e);
+                                // พยายามกู้คืนด้วย Anonymous sign-in หากเกิด Error อื่นๆ
+                                try { await sdk.signInAnonymously(sdk.auth); } catch(err) {}
+                            }
                         }
                     }, 100);
                 };
@@ -305,7 +333,7 @@
             const [showResetConfirm, setShowResetConfirm] = useState(false);
             const searchTimerRef = useRef(null);
 
-            const apiKey = ""; // Runtime automatically provides this
+            const apiKey = ""; // Runtime provides this automatically
 
             useEffect(() => {
                 if (!roomId || !user || !fb) return;
@@ -336,12 +364,12 @@
                 return () => clearTimeout(searchTimerRef.current);
             }, [search, searchType]);
 
-            // --- Gemini Translate System with Exponential Backoff ---
+            // ระบบแปลภาษาด้วย Gemini AI
             const translateName = async (thaiName) => {
-                const systemPrompt = "Translate Thai anime or character name to its official English or Romaji name. Return ONLY the translated name. If it is already in English, return as is. Example: หนวดดำ -> Blackbeard, มุกิ -> Tsumugi Kotobuki";
-                const delays = [1000, 2000, 4000, 8000, 16000];
+                const systemPrompt = "Translate Thai anime or character name to its official English or Romaji name. Return ONLY the translated name. Example: หนวดดำ -> Blackbeard";
+                const delays = [1000, 2000, 4000, 8000];
 
-                for (let i = 0; i <= delays.length; i++) {
+                for (let i = 0; i < delays.length; i++) {
                     try {
                         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                             method: 'POST',
@@ -356,11 +384,8 @@
                         const result = await response.json();
                         return result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || thaiName;
                     } catch (e) {
-                        if (i === delays.length) {
-                            console.error("Translation failed after retries.");
-                            return thaiName;
-                        }
-                        await new Promise(resolve => setTimeout(resolve, delays[i]));
+                        if (i === delays.length - 1) return thaiName;
+                        await new Promise(r => setTimeout(r, delays[i]));
                     }
                 }
             };
@@ -368,47 +393,31 @@
             async function handleSearchFlow() {
                 const queryText = search.trim();
                 if (!queryText) return;
-
                 setSearching(true);
                 let finalQuery = queryText;
-
                 const isThai = /[\u0E00-\u0E7F]/.test(queryText);
                 if (isThai) {
                     setIsAITranslating(true);
                     finalQuery = await translateName(queryText);
                     setIsAITranslating(false);
                 }
-
                 await executeAniListSearch(finalQuery);
             }
 
             async function executeAniListSearch(searchTerm) {
                 const animeQuery = `query ($s: String) { Page(perPage: 12) { media(search: $s, type: ANIME, sort: POPULARITY_DESC) { id title { romaji english } coverImage { large } } } }`;
                 const charQuery = `query ($s: String) { Page(perPage: 12) { characters(search: $s, sort: SEARCH_MATCH) { id name { full } image { large } } } }`;
-                
                 try {
                     const res = await fetch('https://graphql.anilist.co', { 
                         method: 'POST', 
                         headers: { 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify({ 
-                            query: searchType === 'anime' ? animeQuery : charQuery, 
-                            variables: { s: searchTerm } 
-                        }) 
+                        body: JSON.stringify({ query: searchType === 'anime' ? animeQuery : charQuery, variables: { s: searchTerm } }) 
                     });
                     const data = await res.json();
-                    
                     if (searchType === 'anime') {
-                        setResults(data.data?.Page?.media?.map(m => ({
-                            id: m.id,
-                            title: m.title.romaji || m.title.english,
-                            image: m.coverImage.large
-                        })) || []);
+                        setResults(data.data?.Page?.media?.map(m => ({ id: m.id, title: m.title.romaji || m.title.english, image: m.coverImage.large })) || []);
                     } else {
-                        setResults(data.data?.Page?.characters?.map(c => ({
-                            id: c.id,
-                            title: c.name.full,
-                            image: c.image.large
-                        })) || []);
+                        setResults(data.data?.Page?.characters?.map(c => ({ id: c.id, title: c.name.full, image: c.image.large })) || []);
                     }
                 } catch (e) { console.error(e); }
                 finally { setSearching(false); }
@@ -437,7 +446,6 @@
                 setShowResetConfirm(false);
             }
 
-            const isHost = !roomId || (user && user.uid === owner);
             const gridCols = { 3: 'grid-cols-4', 4: 'grid-cols-5', 5: 'grid-cols-6' }[gridSize];
 
             return (
@@ -461,7 +469,7 @@
 
                     <div className="text-center mb-10">
                         <h2 className="text-[3rem] font-extrabold text-white mb-6 tracking-tight">Anime Grid</h2>
-                        {isHost && (
+                        {(!roomId || (user && user.uid === owner)) && (
                             <div className="flex flex-col items-center gap-4 p-5 bg-[#262626]/40 rounded-[2.5rem] border border-white/5 shadow-inner">
                                 <div className="text-neutral-500 text-xs font-bold uppercase tracking-[0.3em]">เลือกขนาดตาราง</div>
                                 <div className="flex items-center justify-center gap-4">
@@ -491,7 +499,7 @@
                                                 {cell ? (
                                                     <React.Fragment>
                                                         <img src={cell.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent flex flex-col justify-end p-5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent flex flex-col justify-end p-5 opacity-0 group-hover:opacity-100 transition-opacity font-bold">
                                                             <p className="text-xs font-bold text-white leading-tight truncate">{cell.title}</p>
                                                             <p className="text-[10px] text-neutral-500 mt-1 font-medium">โดย {cell.by}</p>
                                                         </div>
@@ -509,7 +517,7 @@
                     {!showResetConfirm ? (
                         <button onClick={() => setShowResetConfirm(true)} className="mt-16 text-neutral-700 hover:text-red-400 transition-colors text-xs font-bold uppercase tracking-[0.3em] px-8 py-3 rounded-2xl">Reset Grid Data</button>
                     ) : (
-                        <div className="mt-16 flex items-center gap-6 animate-slide-up bg-[#262626] p-4 rounded-2xl border border-red-500/20 shadow-xl">
+                        <div className="mt-16 flex items-center gap-6 animate-slide-up bg-[#262626] p-4 rounded-2xl border border-red-500/20 shadow-xl font-bold">
                             <span className="text-red-400 text-xs font-bold uppercase tracking-widest">ยืนยันล้างกระดาน?</span>
                             <button onClick={() => changeSize(gridSize)} className="text-white bg-red-600 px-6 py-2 rounded-xl text-xs font-bold shadow-lg shadow-red-600/20">ล้างทั้งหมด</button>
                             <button onClick={() => setShowResetConfirm(false)} className="text-neutral-500 text-xs font-bold hover:text-white px-4 py-2 transition-colors">ยกเลิก</button>
@@ -531,7 +539,7 @@
                                     <div className="mb-10 relative">
                                         <input autoFocus value={search} onChange={e => setSearch(e.target.value)} className={`w-full bg-[#1a1a1a] border border-white/5 rounded-3xl px-8 py-6 focus:outline-none focus:ring-4 transition-all shadow-inner font-medium text-xl ${searchType === 'anime' ? 'focus:ring-indigo-500/20' : 'focus:ring-pink-500/20'}`} placeholder={searchType === 'anime' ? "พิมพ์ชื่อเรื่องไทยหรืออังกฤษ..." : "พิมพ์ชื่อตัวละคร..."} />
                                         {isAITranslating && (
-                                            <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3 text-sm font-bold text-indigo-400 bg-[#262626] px-5 py-2 rounded-full shadow-sm animate-pulse border border-indigo-500/20">
+                                            <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3 text-sm font-bold text-indigo-400 bg-[#262626] px-5 py-2 rounded-full shadow-sm animate-pulse border border-indigo-500/20 font-bold">
                                                 <Icon name="sparkles" size={18} /> AI กำลังแปลชื่อ...
                                             </div>
                                         )}
@@ -539,8 +547,8 @@
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 overflow-y-auto max-h-[40vh] pr-4 custom-scrollbar">
                                         {(searching || isAITranslating) && <div className="col-span-full py-16 text-center text-indigo-400 font-bold animate-pulse text-xl">กำลังดึงข้อมูลจากฐานข้อมูล...</div>}
                                         {results.map(item => (
-                                            <button key={item.id} onClick={() => selectItem(item)} className="group text-left animate-slide-up">
-                                                <div className="aspect-[3/4] rounded-[1.5rem] overflow-hidden mb-4 bg-[#1a1a1a] shadow-lg border border-white/5">
+                                            <button key={item.id} onClick={() => selectItem(item)} className="group text-left animate-slide-up font-bold">
+                                                <div className="aspect-[3/4] rounded-[1.5rem] overflow-hidden mb-4 bg-[#1a1a1a] shadow-lg border border-white/5 font-bold">
                                                     <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                                                 </div>
                                                 <p className="text-sm font-bold text-neutral-300 group-hover:text-white transition-colors line-clamp-2 leading-tight">{item.title}</p>
