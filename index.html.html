@@ -18,51 +18,55 @@
             overflow-x: hidden;
         }
         .bg-main { background-color: #171717; }
-        .card-bg { background-color: #262626; }
-        .input-bg { background-color: #1a1a1a; }
-        
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-slide-up { animation: slideUp 0.4s ease-out forwards; }
-        
         .text-gradient {
             background: linear-gradient(to right, #a78bfa, #f472b6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .btn-primary {
-            background-color: #4f46e5;
-            transition: all 0.2s;
-        }
-        .btn-primary:hover {
-            background-color: #4338ca;
-            transform: translateY(-1px);
-        }
-        .btn-secondary {
-            background-color: #2e2e2e;
-            color: #737373;
-        }
+        .btn-primary { background-color: #4f46e5; transition: all 0.2s; }
+        .btn-primary:hover { background-color: #4338ca; transform: translateY(-1px); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slide-up { animation: slideUp 0.4s ease-out forwards; }
     </style>
 </head>
 <body class="bg-main">
     <div id="root"></div>
 
+    <!-- โหลด Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, deleteField, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        window.FirebaseSDK = { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, deleteField, collection };
+        // --- พี่เตือนน้องตรงนี้: เอา Config จาก Firebase Console มาใส่ตรงนี้ ---
+        const yourFirebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // ตรวจสอบว่ามี Config จริงหรือเปล่า ถ้าไม่มีให้ลองหาจากตัวแปรระบบ (สำหรับ Gemini Canvas)
+        const finalConfig = yourFirebaseConfig.apiKey === "YOUR_API_KEY" && typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : yourFirebaseConfig;
+
+        const app = initializeApp(finalConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // ส่ง Object ออกไปให้ React ใช้
+        window.FirebaseBridge = { auth, db, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, signInAnonymously, onAuthStateChanged };
     </script>
 
     <script type="text/babel">
         const { useState, useEffect } = React;
-        const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, deleteField, collection } = window.FirebaseSDK;
 
-        // Icons matches the image style
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
                 gamepad: <path d="M6 12h4m-2-2v4m7-1h.01m2.99-2h.01M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/>,
@@ -86,51 +90,47 @@
             left: ["ชีวิตในโรงเรียน", "มีหูสัตว์/หางสัตว์", "กีฬา/การแข่งขัน", "แอคชัน/ผจญภัย", "ตลก/คอเมดี้", "สืบสวน/ระทึกขวัญ"]
         };
 
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "", authDomain: "", projectId: "" };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'anime-grid-hub';
-
         function App() {
             const [screen, setScreen] = useState('hub');
             const [user, setUser] = useState(null);
             const [roomId, setRoomId] = useState('');
             const [playerName, setPlayerName] = useState(localStorage.getItem('anime_player_name') || '');
+            const [fb, setFb] = useState(null);
 
             useEffect(() => {
-                const initAuth = async () => {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
+                const checkBridge = setInterval(() => {
+                    if (window.FirebaseBridge) {
+                        setFb(window.FirebaseBridge);
+                        clearInterval(checkBridge);
                     }
-                };
-                initAuth();
-                const unsubscribe = onAuthStateChanged(auth, setUser);
-                return () => unsubscribe();
+                }, 100);
+                return () => clearInterval(checkBridge);
             }, []);
+
+            useEffect(() => {
+                if (!fb) return;
+                fb.signInAnonymously(fb.auth).catch(e => console.error("Auth Error", e));
+                const unsubscribe = fb.onAuthStateChanged(fb.auth, setUser);
+                return () => unsubscribe();
+            }, [fb]);
 
             useEffect(() => {
                 if (playerName) localStorage.setItem('anime_player_name', playerName);
             }, [playerName]);
 
+            if (!fb) return <div className="min-h-screen flex items-center justify-center text-indigo-400 font-bold">กำลังเชื่อมต่อฐานข้อมูล...</div>;
+
             return (
-                <div className="min-h-screen flex flex-col bg-main">
+                <div className="min-h-screen flex flex-col bg-[#171717]">
                     {screen === 'hub' && <Hub onSelect={() => setScreen('menu')} />}
-                    {screen === 'menu' && (
-                        <Menu 
-                            onLocal={() => { setRoomId(''); setScreen('game'); }} 
-                            onMulti={() => setScreen('lobby')} 
-                            onBack={() => setScreen('hub')} 
-                        />
-                    )}
-                    {screen === 'lobby' && <Lobby onBack={() => setScreen('menu')} onJoin={(id) => { setRoomId(id); setScreen('game'); }} user={user} playerName={playerName} setPlayerName={setPlayerName} />}
-                    {screen === 'game' && <Game roomId={roomId} onBack={() => setScreen('menu')} user={user} playerName={playerName} />}
+                    {screen === 'menu' && <Menu onLocal={() => { setRoomId(''); setScreen('game'); }} onMulti={() => setScreen('lobby')} onBack={() => setScreen('hub')} />}
+                    {screen === 'lobby' && <Lobby fb={fb} onBack={() => setScreen('menu')} onJoin={(id) => { setRoomId(id); setScreen('game'); }} user={user} playerName={playerName} setPlayerName={setPlayerName} />}
+                    {screen === 'game' && <Game fb={fb} roomId={roomId} onBack={() => setScreen('menu')} user={user} playerName={playerName} />}
                 </div>
             );
         }
 
+        // --- หน้า Hub ---
         function Hub({ onSelect }) {
             return (
                 <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up">
@@ -138,61 +138,39 @@
                         <Icon name="gamepad" size={32} className="text-indigo-400" />
                     </div>
                     <h1 className="text-6xl font-extrabold text-gradient mb-4">Game Hub</h1>
-                    <p className="text-neutral-500 mb-12 text-center max-w-sm">ยินดีต้อนรับสู่ศูนย์รวมมินิเกมสายอนิเมะ</p>
+                    <p className="text-neutral-500 mb-12 text-center max-w-sm">ศูนย์รวมมินิเกมสายอนิเมะ</p>
                     <button onClick={onSelect} className="w-full max-w-sm bg-[#262626] p-6 rounded-[2rem] border border-white/5 hover:border-indigo-500/30 transition-all text-left group">
-                        <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-500/20 transition-colors">
-                            <Icon name="grid" size={24} className="text-indigo-400" />
-                        </div>
+                        <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-4"><Icon name="grid" size={24} className="text-indigo-400" /></div>
                         <h3 className="text-2xl font-bold mb-1 text-white">Anime Grid</h3>
-                        <p className="text-neutral-500 text-sm leading-relaxed">เติมชื่ออนิเมะลงตารางบิงโก</p>
+                        <p className="text-neutral-500 text-sm">เติมชื่ออนิเมะลงตารางบิงโก</p>
                     </button>
                 </div>
             );
         }
 
+        // --- หน้า Menu เลือกโหมด (ตามรูปเป๊ะๆ) ---
         function Menu({ onLocal, onMulti, onBack }) {
             return (
-                <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up bg-main">
-                    {/* Top Icon Box */}
+                <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up bg-[#171717]">
                     <div className="w-20 h-20 bg-[#262626] rounded-[1.25rem] flex items-center justify-center mb-10 shadow-lg border border-white/5">
                         <Icon name="grid" size={40} className="text-[#818cf8]" />
                     </div>
-
-                    {/* Title & Description */}
                     <div className="text-center mb-12">
-                        <h1 className="text-[5rem] font-extrabold tracking-tight text-gradient mb-4 leading-tight">
-                            Anime Grid
-                        </h1>
-                        <p className="text-neutral-400 text-lg font-medium">
-                            เกมเติมชื่ออนิเมะลงตารางบิงโก เลือกโหมดที่ต้องการเล่นได้เลย
-                        </p>
+                        <h1 className="text-[5rem] font-extrabold tracking-tight text-gradient mb-4 leading-tight">Anime Grid</h1>
+                        <p className="text-neutral-400 text-lg font-medium">เกมเติมชื่ออนิเมะลงตารางบิงโก เลือกโหมดที่ต้องการเล่นได้เลย</p>
                     </div>
-
-                    {/* Selection Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-[50rem] px-4">
-                        <button 
-                            onClick={onLocal}
-                            className="bg-[#262626] hover:bg-[#2e2e2e] p-12 rounded-[2rem] border border-white/5 transition-all group flex flex-col items-center text-center"
-                        >
-                            <div className="mb-6">
-                                <Icon name="user" size={42} className="text-[#4ade80] group-hover:scale-110 transition-transform" />
-                            </div>
+                        <button onClick={onLocal} className="bg-[#262626] hover:bg-[#2e2e2e] p-12 rounded-[2rem] border border-white/5 transition-all group flex flex-col items-center text-center">
+                            <div className="mb-6"><Icon name="user" size={42} className="text-[#4ade80] group-hover:scale-110 transition-transform" /></div>
                             <h3 className="text-2xl font-bold mb-3 text-white">เล่นคนเดียว</h3>
                             <p className="text-neutral-500 text-sm">เล่นชิลๆ คนเดียวในเครื่องนี้</p>
                         </button>
-
-                        <button 
-                            onClick={onMulti}
-                            className="bg-[#1e1b4b]/40 hover:bg-[#1e1b4b]/60 p-12 rounded-[2rem] border border-[#4338ca]/30 transition-all group flex flex-col items-center text-center"
-                        >
-                            <div className="mb-6">
-                                <Icon name="users" size={42} className="text-[#818cf8] group-hover:scale-110 transition-transform" />
-                            </div>
+                        <button onClick={onMulti} className="bg-[#1e1b4b]/40 hover:bg-[#1e1b4b]/60 p-12 rounded-[2rem] border border-[#4338ca]/30 transition-all group flex flex-col items-center text-center">
+                            <div className="mb-6"><Icon name="users" size={42} className="text-[#818cf8] group-hover:scale-110 transition-transform" /></div>
                             <h3 className="text-2xl font-bold mb-3 text-white">เล่นกับเพื่อน (ออนไลน์)</h3>
                             <p className="text-neutral-400/50 text-sm max-w-[15rem]">สร้างห้องหรือใส่รหัสเพื่อเล่นตารางเดียวกันแบบเรียลไทม์</p>
                         </button>
                     </div>
-
                     <button onClick={onBack} className="mt-16 text-neutral-600 hover:text-white transition-colors text-sm font-bold flex items-center">
                         <Icon name="back" size={16} className="mr-2" /> กลับไปหน้าหลัก
                     </button>
@@ -200,16 +178,18 @@
             );
         }
 
-        function Lobby({ onBack, onJoin, user, playerName, setPlayerName }) {
+        // --- หน้า Lobby (ตามรูปเป๊ะๆ) ---
+        function Lobby({ fb, onBack, onJoin, user, playerName, setPlayerName }) {
             const [roomCode, setRoomCode] = useState('');
             const [loading, setLoading] = useState(false);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'anime-grid-global';
 
             const handleCreate = async () => {
                 if (!playerName.trim() || !user) return;
                 setLoading(true);
-                const id = Math.random().toString(36).substring(2, 5).toUpperCase(); // 3 letters like example
-                const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', id);
-                await setDoc(roomRef, {
+                const id = Math.random().toString(36).substring(2, 5).toUpperCase();
+                const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', id);
+                await fb.setDoc(roomRef, {
                     grid: Array(9).fill(null),
                     gridSize: 3,
                     owner: user.uid,
@@ -222,10 +202,10 @@
             const handleJoin = async () => {
                 if (!roomCode.trim() || !playerName.trim() || !user) return;
                 setLoading(true);
-                const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode.toUpperCase());
-                const snap = await getDoc(roomRef);
+                const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode.toUpperCase());
+                const snap = await fb.getDoc(roomRef);
                 if (snap.exists()) {
-                    await updateDoc(roomRef, { [`players.${user.uid}`]: playerName });
+                    await fb.updateDoc(roomRef, { [`players.${user.uid}`]: playerName });
                     onJoin(roomCode.toUpperCase());
                 } else {
                     alert("ไม่พบรหัสห้อง");
@@ -234,57 +214,28 @@
             };
 
             return (
-                <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up bg-main">
+                <div className="flex-1 flex flex-col items-center justify-center p-6 animate-slide-up bg-[#171717]">
                     <div className="w-full max-w-[32rem]">
-                         <button onClick={onBack} className="text-neutral-500 hover:text-white mb-8 flex items-center text-sm font-medium">
+                        <button onClick={onBack} className="text-neutral-500 hover:text-white mb-8 flex items-center text-sm font-medium">
                             <Icon name="back" size={16} className="mr-2" /> กลับหน้าเลือกโหมด
                         </button>
-
                         <div className="bg-[#262626] p-12 rounded-[2.5rem] shadow-2xl border border-white/5">
                             <h2 className="text-[2rem] font-extrabold mb-10 text-center text-white tracking-tight">ระบบห้องเล่นด้วยกัน</h2>
-                            
                             <div className="space-y-8">
                                 <div className="space-y-3">
                                     <label className="text-sm font-medium text-neutral-400 px-1">ชื่อของคุณ (แสดงในห้อง)</label>
-                                    <input 
-                                        value={playerName} 
-                                        onChange={e => setPlayerName(e.target.value)} 
-                                        className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white transition-all text-lg" 
-                                        placeholder="ใส่ชื่อของคุณ..."
-                                    />
+                                    <input value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white transition-all text-lg" placeholder="ใส่ชื่อของคุณ..." />
                                 </div>
-                                
-                                <button 
-                                    onClick={handleCreate} 
-                                    disabled={loading || !playerName} 
-                                    className="w-full btn-primary py-5 rounded-2xl font-extrabold text-xl disabled:opacity-50 text-white shadow-xl shadow-indigo-500/10"
-                                >
-                                    {loading ? 'กำลังประมวลผล...' : 'สร้างห้องใหม่'}
-                                </button>
-
+                                <button onClick={handleCreate} disabled={loading || !playerName} className="w-full btn-primary py-5 rounded-2xl font-extrabold text-xl disabled:opacity-50 text-white shadow-xl shadow-indigo-500/10">สร้างห้องใหม่</button>
                                 <div className="relative py-4 flex items-center justify-center">
-                                    <div className="absolute inset-0 flex items-center">
-                                        <div className="w-full border-t border-white/5"></div>
-                                    </div>
+                                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
                                     <span className="relative px-4 bg-[#262626] text-neutral-600 text-sm font-medium">หรือ</span>
                                 </div>
-
                                 <div className="space-y-3">
                                     <label className="text-sm font-medium text-neutral-400 px-1">เข้าร่วมห้องเพื่อน</label>
                                     <div className="flex gap-3">
-                                        <input 
-                                            value={roomCode} 
-                                            onChange={e => setRoomCode(e.target.value.toUpperCase())} 
-                                            className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white uppercase tracking-widest text-lg" 
-                                            placeholder="ใส่รหัสห้อง (เช่น KON)"
-                                        />
-                                        <button 
-                                            onClick={handleJoin} 
-                                            disabled={loading || !playerName || !roomCode} 
-                                            className="bg-[#333333] hover:bg-[#3d3d3d] px-8 rounded-2xl font-bold text-lg transition-all disabled:opacity-50 text-[#737373] hover:text-white"
-                                        >
-                                            เข้าห้อง
-                                        </button>
+                                        <input value={roomCode} onChange={e => setRoomCode(e.target.value.toUpperCase())} className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-5 font-mono focus:outline-none text-white uppercase tracking-widest text-lg" placeholder="ใส่รหัสห้อง (เช่น KON)" />
+                                        <button onClick={handleJoin} disabled={loading || !playerName || !roomCode} className="bg-[#333333] hover:bg-[#3d3d3d] px-8 rounded-2xl font-bold text-lg text-[#737373] hover:text-white">เข้าห้อง</button>
                                     </div>
                                 </div>
                             </div>
@@ -294,132 +245,76 @@
             );
         }
 
-        function Game({ roomId, onBack, user, playerName }) {
+        // --- หน้า Game ---
+        function Game({ fb, roomId, onBack, user, playerName }) {
             const [gridSize, setGridSize] = useState(3);
             const [grid, setGrid] = useState(Array(9).fill(null));
             const [players, setPlayers] = useState({});
-            const [owner, setOwner] = useState('');
             const [activeCell, setActiveCell] = useState(null);
             const [search, setSearch] = useState('');
             const [results, setResults] = useState([]);
             const [searching, setSearching] = useState(false);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'anime-grid-global';
 
             useEffect(() => {
                 if (!roomId || !user) return;
-                const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-                const unsubscribe = onSnapshot(roomRef, (snap) => {
+                const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+                const unsubscribe = fb.onSnapshot(roomRef, (snap) => {
                     if (snap.exists()) {
                         const data = snap.data();
                         setGrid(data.grid);
                         setGridSize(data.gridSize);
                         setPlayers(data.players || {});
-                        setOwner(data.owner);
                     }
                 });
                 return () => unsubscribe();
             }, [roomId, user]);
-
-            const updateGrid = async (newGrid) => {
-                if (roomId) {
-                    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-                    await updateDoc(roomRef, { grid: newGrid });
-                } else { setGrid(newGrid); }
-            };
 
             const searchAnime = async () => {
                 if (!search.trim()) return;
                 setSearching(true);
                 const query = `query ($s: String) { Page(perPage: 12) { media(search: $s, type: ANIME, sort: POPULARITY_DESC) { id title { romaji english } coverImage { large } } } }`;
                 try {
-                    const res = await fetch('https://graphql.anilist.co', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ query, variables: { s: search } })
-                    });
+                    const res = await fetch('https://graphql.anilist.co', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query, variables: { s: search } }) });
                     const data = await res.json();
                     setResults(data.data.Page.media);
                 } catch (e) { console.error(e); }
                 finally { setSearching(false); }
             };
 
-            const selectAnime = (anime) => {
+            const selectAnime = async (anime) => {
                 const newGrid = [...grid];
-                newGrid[activeCell] = {
-                    title: anime.title.english || anime.title.romaji,
-                    image: anime.coverImage.large,
-                    by: playerName || 'Player'
-                };
-                updateGrid(newGrid);
-                setActiveCell(null);
-                setSearch('');
-                setResults([]);
+                newGrid[activeCell] = { title: anime.title.english || anime.title.romaji, image: anime.coverImage.large, by: playerName || 'Player' };
+                if (roomId) {
+                    const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+                    await fb.updateDoc(roomRef, { grid: newGrid });
+                } else { setGrid(newGrid); }
+                setActiveCell(null); setSearch(''); setResults([]);
             };
 
-            const isHost = !roomId || (user && user.uid === owner);
             const gridCols = { 3: 'grid-cols-4', 4: 'grid-cols-5', 5: 'grid-cols-6' }[gridSize];
 
             return (
                 <div className="flex-1 p-4 md:p-8 flex flex-col items-center">
                     <div className="w-full max-w-5xl flex items-center justify-between gap-4 mb-10">
-                        <button onClick={onBack} className="text-neutral-500 hover:text-white flex items-center font-bold transition-colors">
-                            <Icon name="back" size={20} className="mr-2" /> ออกจากการเล่น
-                        </button>
-                        
-                        {roomId && (
-                            <div className="flex items-center gap-3">
-                                <div className="bg-[#262626] border border-white/5 px-4 py-2 rounded-2xl text-[10px] font-bold text-neutral-400 flex items-center">
-                                    <Icon name="users" size={14} className="mr-2 text-indigo-400" />
-                                    {Object.values(players).join(', ')}
-                                </div>
-                                <div className="bg-indigo-600/20 border border-indigo-500/20 px-4 py-2 rounded-2xl text-[10px] font-mono font-black text-indigo-400">
-                                    ROOM: {roomId}
-                                </div>
-                            </div>
-                        )}
+                        <button onClick={onBack} className="text-neutral-500 hover:text-white flex items-center font-bold"><Icon name="back" size={20} className="mr-2" /> ออก</button>
+                        {roomId && <div className="flex items-center gap-3"><div className="bg-[#262626] border border-white/5 px-4 py-2 rounded-2xl text-[10px] font-bold text-neutral-400">ROOM: {roomId}</div></div>}
                     </div>
-
-                    <div className="text-center mb-10">
-                        <h2 className="text-4xl font-extrabold text-white mb-4 tracking-tight">Anime Grid</h2>
-                    </div>
-
-                    <div className="bg-[#262626] p-4 md:p-8 rounded-[3rem] shadow-2xl w-full max-w-4xl overflow-x-auto custom-scrollbar border border-white/5">
+                    <h2 className="text-4xl font-extrabold text-white mb-10">Anime Grid</h2>
+                    <div className="bg-[#262626] p-6 rounded-[3rem] shadow-2xl w-full max-w-4xl overflow-x-auto custom-scrollbar border border-white/5">
                         <div className={`grid ${gridCols} gap-3 md:gap-5 min-w-[600px]`}>
-                            <div className="aspect-square flex items-center justify-center">
-                                <div className="w-full h-full bg-[#171717] rounded-3xl border-2 border-dashed border-white/5 flex items-center justify-center">
-                                    <Icon name="grid" size={24} className="text-neutral-800" />
-                                </div>
-                            </div>
-                            
-                            {CATEGORIES.top.slice(0, gridSize).map((cat, i) => (
-                                <div key={i} className="aspect-square bg-indigo-500/10 rounded-3xl flex items-center justify-center p-3 text-center text-[10px] md:text-xs font-bold text-indigo-400 border border-indigo-500/20">
-                                    {cat}
-                                </div>
-                            ))}
-
+                            <div className="aspect-square flex items-center justify-center"><div className="w-full h-full bg-[#171717] rounded-3xl border-2 border-dashed border-white/5 flex items-center justify-center"><Icon name="grid" size={24} className="text-neutral-800" /></div></div>
+                            {CATEGORIES.top.slice(0, gridSize).map((cat, i) => <div key={i} className="aspect-square bg-indigo-500/10 rounded-3xl flex items-center justify-center p-3 text-center text-[10px] md:text-xs font-bold text-indigo-400 border border-indigo-500/20">{cat}</div>)}
                             {CATEGORIES.left.slice(0, gridSize).map((lCat, rowIdx) => (
                                 <React.Fragment key={rowIdx}>
-                                    <div className="aspect-square bg-pink-500/10 rounded-3xl flex items-center justify-center p-3 text-center text-[10px] md:text-xs font-bold text-pink-400 border border-pink-500/20">
-                                        {lCat}
-                                    </div>
+                                    <div className="aspect-square bg-pink-500/10 rounded-3xl flex items-center justify-center p-3 text-center text-[10px] md:text-xs font-bold text-pink-400 border border-pink-500/20">{lCat}</div>
                                     {Array.from({ length: gridSize }).map((_, colIdx) => {
-                                        const idx = rowIdx * gridSize + colIdx;
-                                        const cell = grid[idx];
+                                        const idx = rowIdx * gridSize + colIdx; const cell = grid[idx];
                                         return (
                                             <button key={idx} onClick={() => setActiveCell(idx)} className="aspect-square bg-[#1a1a1a] hover:bg-[#222] transition-all rounded-3xl overflow-hidden group relative border border-white/5 flex flex-col items-center justify-center">
                                                 {cell ? (
-                                                    <React.Fragment>
-                                                        <img src={cell.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <p className="text-[10px] font-bold text-white leading-tight truncate">{cell.title}</p>
-                                                            <p className="text-[8px] text-neutral-500 mt-1">โดย {cell.by}</p>
-                                                        </div>
-                                                        <div className="absolute top-2 right-2 bg-[#4ade80] text-black rounded-full p-1 shadow-lg"><Icon name="check" size={10} strokeWidth={4} /></div>
-                                                    </React.Fragment>
-                                                ) : (
-                                                    <div className="flex flex-col items-center justify-center text-neutral-800 group-hover:text-indigo-400/50 transition-colors">
-                                                        <Icon name="search" size={20} />
-                                                    </div>
-                                                )}
+                                                    <React.Fragment><img src={cell.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /><div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity"><p className="text-[10px] font-bold text-white truncate">{cell.title}</p><p className="text-[8px] text-neutral-500 mt-1">โดย {cell.by}</p></div><div className="absolute top-2 right-2 bg-[#4ade80] text-black rounded-full p-1 shadow-lg"><Icon name="check" size={10} strokeWidth={4} /></div></React.Fragment>
+                                                ) : <Icon name="search" size={20} className="text-neutral-800 group-hover:text-indigo-400/50" />}
                                             </button>
                                         );
                                     })}
@@ -427,44 +322,17 @@
                             ))}
                         </div>
                     </div>
-
-                    <button 
-                        onClick={() => confirm("ล้างกระดาน?") && updateGrid(Array(gridSize * gridSize).fill(null))}
-                        className="mt-12 text-neutral-700 hover:text-red-400 transition-colors text-xs font-bold uppercase tracking-widest"
-                    >
-                        Reset Grid Data
-                    </button>
-
                     {activeCell !== null && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
                             <div className="w-full max-w-xl bg-[#262626] rounded-[2.5rem] overflow-hidden flex flex-col max-h-[85vh] shadow-2xl border border-white/5 animate-slide-up">
-                                <div className="p-8 border-b border-white/5 flex justify-between items-center">
-                                    <h3 className="text-2xl font-bold text-white">เลือกอนิเมะ</h3>
-                                    <button onClick={() => setActiveCell(null)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-neutral-500"><Icon name="close" /></button>
-                                </div>
+                                <div className="p-8 border-b border-white/5 flex justify-between items-center"><h3 className="text-2xl font-bold text-white">เลือกอนิเมะ</h3><button onClick={() => setActiveCell(null)} className="p-2 text-neutral-500"><Icon name="close" /></button></div>
                                 <div className="p-8">
-                                    <div className="flex gap-2 mb-8">
-                                        <input 
-                                            autoFocus
-                                            value={search}
-                                            onChange={e => setSearch(e.target.value)}
-                                            onKeyDown={e => e.key === 'Enter' && searchAnime()}
-                                            className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-white" 
-                                            placeholder="พิมพ์ชื่อเรื่อง..."
-                                        />
-                                        <button onClick={searchAnime} disabled={searching} className="btn-primary px-8 rounded-2xl font-bold transition-all text-white">
-                                            {searching ? '...' : 'ค้นหา'}
-                                        </button>
-                                    </div>
+                                    <div className="flex gap-2 mb-8"><input autoFocus value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchAnime()} className="flex-1 bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-4 text-white" placeholder="พิมพ์ชื่อเรื่อง..." /><button onClick={searchAnime} className="btn-primary px-8 rounded-2xl font-bold text-white">{searching ? '...' : 'ค้นหา'}</button></div>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto max-h-[45vh] pr-2 custom-scrollbar">
                                         {results.map(anime => (
                                             <button key={anime.id} onClick={() => selectAnime(anime)} className="group text-left">
-                                                <div className="aspect-[3/4] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] shadow-lg border border-white/5">
-                                                    <img src={anime.coverImage.large} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                                                </div>
-                                                <p className="text-[10px] font-bold text-neutral-400 group-hover:text-white transition-colors line-clamp-2">
-                                                    {anime.title.romaji}
-                                                </p>
+                                                <div className="aspect-[3/4] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] shadow-lg border border-white/5"><img src={anime.coverImage.large} className="w-full h-full object-cover group-hover:scale-110 transition-transform" /></div>
+                                                <p className="text-[10px] font-bold text-neutral-400 group-hover:text-white line-clamp-2">{anime.title.romaji}</p>
                                             </button>
                                         ))}
                                     </div>
