@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import { 
   getAuth, 
   signInAnonymously, 
@@ -28,15 +28,40 @@ import {
   PlayCircle, 
   Sparkles,
   RefreshCw,
-  Trophy
+  Trophy,
+  AlertCircle
 } from 'lucide-react';
 
-// --- Firebase Configuration ---
-const firebaseConfig = JSON.parse(__firebase_config);
-const app = initializeApp(firebaseConfig);
+// --- Safe Firebase Config Initialization ---
+// เดี๋ยวพี่จะบอกให้นะน้องนะ: ถ้าน้องรันใน Vercel น้องต้องเอา Firebase Config จาก Firebase Console มาใส่ตรงนี้
+// หรือตั้งค่า Environment Variables ชื่อ VITE_FIREBASE_CONFIG (ถ้าใช้ Vite)
+const getFirebaseConfig = () => {
+  try {
+    if (typeof __firebase_config !== 'undefined') {
+      return JSON.parse(__firebase_config);
+    }
+  } catch (e) {
+    console.warn("Global config not found, checking process.env");
+  }
+  
+  // Fallback สำหรับการรันบน Vercel/Production
+  return {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+};
+
+const firebaseConfig = getFirebaseConfig();
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'anime-grid-hub-v1';
+
+// Initialize Firebase only if not already initialized
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'anime-grid-hub';
 
 // --- Constants ---
 const CATEGORIES = {
@@ -46,7 +71,7 @@ const CATEGORIES = {
 
 // --- Helper Functions ---
 const fetchGemini = async (prompt, systemInstruction) => {
-  const apiKey = ""; // Environment handles this
+  const apiKey = ""; // API Key จะถูกจัดการโดยสภาพแวดล้อมรันไทม์
   let delay = 1000;
   for (let i = 0; i < 5; i++) {
     try {
@@ -73,15 +98,29 @@ export default function App() {
   const [screen, setScreen] = useState('hub');
   const [user, setUser] = useState(null);
   const [roomId, setRoomId] = useState('');
-  const [playerName, setPlayerName] = useState(localStorage.getItem('anime_player_name') || '');
+  const [playerName, setPlayerName] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('anime_player_name') || '';
+    }
+    return '';
+  });
+  const [configError, setConfigError] = useState(false);
 
   // Auth Initialization
   useEffect(() => {
     const initAuth = async () => {
-      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-        await signInWithCustomToken(auth, __initial_auth_token);
-      } else {
-        await signInAnonymously(auth);
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (err) {
+        console.error("Auth Error:", err);
+        // ถ้า Firebase Config ไม่ถูกต้องจะเกิด Error ตรงนี้
+        if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+          setConfigError(true);
+        }
       }
     };
     initAuth();
@@ -90,14 +129,30 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (playerName) localStorage.setItem('anime_player_name', playerName);
+    if (playerName && typeof window !== 'undefined') {
+      localStorage.setItem('anime_player_name', playerName);
+    }
   }, [playerName]);
+
+  // Error Screen for Vercel users who forgot to set config
+  if (configError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a0a] p-6 text-center">
+        <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
+        <h1 className="text-2xl font-bold mb-2">ลืมตั้งค่า Firebase นะน้องนะ</h1>
+        <p className="text-neutral-500 max-w-md">
+          น้องต้องเอา Firebase Config ของตัวเองมาใส่ในโค้ดตรง `getFirebaseConfig` 
+          ก่อนเอาไปรันบน Vercel นะน้องนะ ไม่งั้นระบบฐานข้อมูลจะไม่ทำงาน
+        </p>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a0a] text-indigo-400">
         <RefreshCw className="w-10 h-10 animate-spin mb-4" />
-        <p className="font-bold tracking-widest animate-pulse">CONNECTING TO HUB...</p>
+        <p className="font-bold tracking-widest animate-pulse uppercase">Connecting to Database...</p>
       </div>
     );
   }
@@ -124,6 +179,7 @@ export default function App() {
   );
 }
 
+// --- Hub Screen ---
 function Hub({ onSelect }) {
   return (
     <div className="flex-1 min-h-screen flex flex-col items-center justify-center p-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -151,6 +207,7 @@ function Hub({ onSelect }) {
   );
 }
 
+// --- Menu Screen ---
 function Menu({ onLocal, onMulti, onBack }) {
   return (
     <div className="flex-1 min-h-screen flex flex-col items-center justify-center p-6 animate-in zoom-in-95 duration-500">
@@ -178,6 +235,7 @@ function Menu({ onLocal, onMulti, onBack }) {
   );
 }
 
+// --- Lobby Screen ---
 function Lobby({ onBack, onJoin, user, playerName, setPlayerName }) {
   const [roomCode, setRoomCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -240,7 +298,7 @@ function Lobby({ onBack, onJoin, user, playerName, setPlayerName }) {
               disabled={loading || !playerName} 
               className="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-2xl font-black text-lg shadow-xl shadow-indigo-600/10 transition-all disabled:opacity-50"
             >
-              {loading ? 'กำลังเข้าสู่ระบบ...' : 'สร้างห้องใหม่'}
+              {loading ? 'กำลังสร้างห้อง...' : 'สร้างห้องใหม่'}
             </button>
 
             <div className="relative py-4 flex items-center justify-center">
@@ -271,6 +329,7 @@ function Lobby({ onBack, onJoin, user, playerName, setPlayerName }) {
   );
 }
 
+// --- Game Screen ---
 function Game({ roomId, onBack, user, playerName }) {
   const [gridSize, setGridSize] = useState(3);
   const [grid, setGrid] = useState(Array(9).fill(null));
@@ -294,7 +353,7 @@ function Game({ roomId, onBack, user, playerName }) {
         setPlayers(data.players || {});
         setOwner(data.owner || '');
       }
-    }, (err) => console.error(err));
+    }, (err) => console.error("Firestore Listen Error:", err));
     return () => unsubscribe();
   }, [roomId]);
 
@@ -323,7 +382,6 @@ function Game({ roomId, onBack, user, playerName }) {
       setIsAITranslating(false);
     }
 
-    // Call AniList API
     const query = searchType === 'anime' 
       ? `query ($s: String) { Page(perPage: 9) { media(search: $s, type: ANIME, sort: POPULARITY_DESC) { id title { romaji english } coverImage { large } } } }`
       : `query ($s: String) { Page(perPage: 9) { characters(search: $s, sort: SEARCH_MATCH) { id name { full } image { large } } } }`;
@@ -336,10 +394,10 @@ function Game({ roomId, onBack, user, playerName }) {
       });
       const data = await response.json();
       const items = searchType === 'anime' 
-        ? data.data.Page.media.map(m => ({ id: m.id, title: m.title.romaji || m.title.english, image: m.coverImage.large }))
-        : data.data.Page.characters.map(c => ({ id: c.id, title: c.name.full, image: c.image.large }));
+        ? (data.data?.Page?.media || []).map(m => ({ id: m.id, title: m.title.romaji || m.title.english, image: m.coverImage.large }))
+        : (data.data?.Page?.characters || []).map(c => ({ id: c.id, title: c.name.full, image: c.image.large }));
       setResults(items);
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Search API Error:", e); }
     setSearching(false);
   };
 
@@ -348,7 +406,9 @@ function Game({ roomId, onBack, user, playerName }) {
     newGrid[activeCell] = { ...item, by: playerName };
     if (roomId) {
       const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-      await updateDoc(roomRef, { grid: newGrid });
+      try {
+        await updateDoc(roomRef, { grid: newGrid });
+      } catch (err) { console.error("Update Grid Error:", err); }
     } else {
       setGrid(newGrid);
     }
@@ -384,7 +444,7 @@ function Game({ roomId, onBack, user, playerName }) {
     <div className="flex-1 flex flex-col p-4 md:p-10 max-w-7xl mx-auto w-full animate-in fade-in duration-1000">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-10">
-        <button onClick={onBack} className="text-neutral-500 hover:text-white flex items-center font-bold gap-2">
+        <button onClick={onBack} className="text-neutral-500 hover:text-white flex items-center font-bold gap-2 transition-colors">
           <ChevronLeft /> ย้อนกลับ
         </button>
         
@@ -427,27 +487,22 @@ function Game({ roomId, onBack, user, playerName }) {
           className="grid gap-4 min-w-[600px]" 
           style={{ gridTemplateColumns: `repeat(${gridSize + 1}, minmax(0, 1fr))` }}
         >
-          {/* Top Left Empty */}
           <div className="aspect-square flex items-center justify-center">
             <Trophy className="text-neutral-800" size={32} />
           </div>
 
-          {/* Top Categories */}
           {CATEGORIES.top.slice(0, gridSize).map((cat, i) => (
             <div key={i} className="aspect-square bg-indigo-500/5 rounded-3xl flex items-center justify-center p-4 text-center text-[10px] md:text-xs font-black text-indigo-400 border border-indigo-500/10 uppercase tracking-tighter">
               {cat}
             </div>
           ))}
 
-          {/* Rows */}
           {CATEGORIES.left.slice(0, gridSize).map((lCat, rowIdx) => (
             <React.Fragment key={rowIdx}>
-              {/* Left Header */}
               <div className="aspect-square bg-pink-500/5 rounded-3xl flex items-center justify-center p-4 text-center text-[10px] md:text-xs font-black text-pink-400 border border-pink-500/10 uppercase tracking-tighter">
                 {lCat}
               </div>
               
-              {/* Grid Cells */}
               {Array.from({ length: gridSize }).map((_, colIdx) => {
                 const idx = rowIdx * gridSize + colIdx;
                 const cell = grid[idx];
@@ -481,7 +536,7 @@ function Game({ roomId, onBack, user, playerName }) {
 
       <div className="mt-12 flex justify-center">
         <button 
-          onClick={() => { if(confirm("ล้างตารางทั้งหมดนะน้องนะ?")) resetGrid(); }}
+          onClick={() => { if(window.confirm("ล้างตารางทั้งหมดนะน้องนะ?")) resetGrid(); }}
           className="text-neutral-700 hover:text-red-400 transition-colors text-[10px] font-black uppercase tracking-[0.4em] px-8 py-3 rounded-2xl"
         >
           Reset Grid Data
