@@ -258,8 +258,7 @@
             );
         }
 
-        // --- GAME COMPONENTS (BINGO & TIERLIST) ---
-        // (Maintaining their compact logic as per previous requests)
+        // --- BINGO GAME COMPONENT ---
         function BingoGame({ fb, appId, roomId, onBack, user, playerName }) {
             const [grid, setGrid] = useState([]);
             const [gridSize, setGridSize] = useState(3);
@@ -271,7 +270,6 @@
             const [results, setResults] = useState([]);
             const [searching, setSearching] = useState(false);
             const [players, setPlayers] = useState({});
-            const [owner, setOwner] = useState(null);
 
             useEffect(() => {
                 const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
@@ -283,7 +281,6 @@
                         setTurnUid(d.turnUid);
                         setWinnerUid(d.winnerUid);
                         setPlayers(d.players || {});
-                        setOwner(d.owner || null);
                     }
                 });
             }, []);
@@ -327,14 +324,14 @@
                         const roomRef = fb.doc(fb.db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
                         const latest = [...grid];
                         latest[activeCell] = { title: item.title, image: item.image, uid: user.uid };
-                        await fb.updateDoc(roomRef, { grid: latest, turnUid: user.uid }); // Simple turn swap logic for demo
+                        await fb.updateDoc(roomRef, { grid: latest, turnUid: user.uid });
                         setActiveCell(null);
                     }} onCancel={() => setActiveCell(null)} />}
                 </div>
             );
         }
 
-        // --- GUESSING GAME ---
+        // --- GUESSING GAME COMPONENT ---
         function GuessingGame({ fb, appId, roomId, onBack, user, playerName }) {
             const [roomData, setRoomData] = useState(null);
             const [search, setSearch] = useState('');
@@ -391,16 +388,35 @@
             if (!roomData) return null;
 
             const myNameInDb = roomData.players?.[user.uid] || playerName || '';
+            // God Mode Check (JETABAIT Case-insensitive)
             const isGodUser = myNameInDb.toLowerCase() === 'jetabait';
             const myHintsRequestedFromOthers = roomData.hints?.[user.uid] || {};
 
             return (
                 <div className="flex-1 p-6 flex flex-col items-center animate-slide-up">
                     <div className="w-full max-w-4xl flex flex-wrap justify-between items-center mb-10 bg-[#262626]/50 p-4 rounded-[2rem] border border-white/5">
-                        <button onClick={onBack} className="text-neutral-500 font-bold flex items-center hover:text-white transition-colors thai-header px-4"><Icon name="back" size={18} /> ออก</button>
                         <div className="flex items-center gap-4">
-                            <div className="bg-pink-600/20 px-4 py-2 rounded-xl text-pink-400 font-black text-xs uppercase thai-header tracking-wider">ทายตัวละครลับ {isGodUser && <span className="ml-2 bg-indigo-500 text-white px-2 rounded-full text-[8px]">GOD MODE ON</span>}</div>
-                            <div className="bg-neutral-800 px-4 py-2 rounded-xl font-mono text-neutral-400 font-black text-xs tracking-widest uppercase">ห้อง: {roomId}</div>
+                            <button onClick={onBack} className="text-neutral-500 font-bold flex items-center hover:text-white transition-colors thai-header px-4"><Icon name="back" size={18} /> ออก</button>
+                            
+                            {/* God Mode Shortcut - Only visible to Jetabait */}
+                            {isGodUser && (
+                                <div className="flex gap-2 text-[10px] font-bold text-indigo-400 items-center overflow-x-auto custom-scrollbar max-w-[200px] md:max-w-md ml-2 border-l border-white/10 pl-4">
+                                    <span className="text-neutral-500 shrink-0">เฉลย:</span>
+                                    {Object.entries(roomData.secrets || {}).map(([uid, secret]) => (
+                                        uid !== user.uid && (
+                                            <div key={uid} className="whitespace-nowrap bg-indigo-500/10 px-2 py-1 rounded border border-indigo-500/20">
+                                                <span className="text-neutral-500">{roomData.players[uid]}:</span> {secret.title}
+                                            </div>
+                                        )
+                                    ))}
+                                    {Object.keys(roomData.secrets || {}).length <= 1 && <span className="text-neutral-600 italic">รอเพื่อนเลือก...</span>}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            <div className="bg-pink-600/20 px-4 py-2 rounded-xl text-pink-400 font-black text-xs uppercase thai-header tracking-wider shrink-0">ทายตัวละครลับ {isGodUser && <span className="ml-2 bg-indigo-500 text-white px-2 rounded-full text-[8px]">GOD</span>}</div>
+                            <div className="bg-neutral-800 px-4 py-2 rounded-xl font-mono text-neutral-400 font-black text-xs tracking-widest uppercase shrink-0">ห้อง: {roomId}</div>
                         </div>
                     </div>
                     
@@ -419,7 +435,7 @@
                                 ) : <button onClick={() => setPicking(true)} className="w-full py-14 border-4 border-dashed border-white/5 rounded-[2.5rem] text-indigo-400 font-black text-xl hover:bg-indigo-500/5 transition-all thai-header">เลือกตัวละครลับ</button>}
                             </div>
 
-                            {/* Multiple Hint Requests Handling */}
+                            {/* Hint Requests Management */}
                             {Object.entries(myHintsRequestedFromOthers).some(([_, obj]) => Object.values(obj).some(h => h.status === 'requested')) && (
                                 <div className="bg-[#262626] p-6 rounded-[2rem] border border-indigo-500/30 shadow-2xl space-y-4">
                                     <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2 thai-header"><Icon name="message" size={14} /> มีเพื่อนขอคำใบ้!</h4>
@@ -447,26 +463,32 @@
                                 {Object.entries(roomData.players).filter(([id]) => id !== user.uid).map(([uid, name]) => {
                                     const secret = roomData.secrets?.[uid];
                                     const revealed = roomData.reveals?.[uid];
-                                    const hitsToMe = roomData.hints?.[uid]?.[user.uid] || {};
-                                    const canSee = revealed || (isGodUser && secret);
+                                    const hintsToMe = roomData.hints?.[uid]?.[user.uid] || {};
+                                    const hintEntries = Object.entries(hintsToMe).sort((a,b)=>b[1].createdAt-a[1].createdAt);
+                                    
+                                    // Visual for other players (only God user sees secret early)
+                                    const canSeeEarly = isGodUser && secret;
 
                                     return (
-                                        <div key={uid} className={`p-5 rounded-2xl border transition-all ${canSee ? 'bg-pink-500/5 border-pink-500/20' : 'bg-[#1a1a1a] border-white/5'}`}>
+                                        <div key={uid} className={`p-5 rounded-2xl border transition-all ${revealed ? 'bg-pink-500/5 border-pink-500/20' : canSeeEarly ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-[#1a1a1a] border-white/5'}`}>
                                             <div className="flex justify-between items-center">
-                                                <span className="font-black text-lg thai-header uppercase">{name}</span>
-                                                {revealed && <span className="text-[8px] bg-pink-500 text-white px-2 rounded-full font-black thai-header">เฉลยแล้ว</span>}
+                                                <div className="flex flex-col">
+                                                    <span className="font-black text-lg thai-header uppercase">{name}</span>
+                                                    {canSeeEarly && !revealed && <span className="text-[7px] text-indigo-400 font-bold uppercase tracking-tighter">เห็นผ่านพลังพระเจ้า</span>}
+                                                </div>
+                                                {revealed && <span className="text-[8px] bg-pink-500 text-white px-2 py-0.5 rounded-full font-black thai-header">เฉลยแล้ว</span>}
                                             </div>
-                                            {canSee ? (
+                                            {revealed ? (
                                                 <div className="mt-4 pt-4 border-t border-white/5 flex flex-col items-center animate-slide-up text-center">
                                                     {secret.image && <img src={secret.image} className="w-16 h-24 object-cover rounded-lg mb-2 shadow-md" />}
                                                     <p className="font-black text-indigo-400 thai-header">{secret.title}</p>
-                                                    {isGodUser && !revealed && <p className="text-[7px] text-neutral-600 mt-1 uppercase">God Mode View</p>}
                                                 </div>
                                             ) : (
                                                 <div className="mt-4 space-y-3">
                                                     <div className="flex gap-1.5 flex-wrap">
+                                                        <span className="text-[10px] font-black text-neutral-500 w-full mb-1 thai-header uppercase">ขอคำใบ้:</span>
                                                         {[1, 2, 3].map(n => {
-                                                            const requested = Object.values(hitsToMe).some(h => h.type === n);
+                                                            const requested = Object.values(hintsToMe).some(h => h.type === n);
                                                             return (
                                                                 <button key={n} disabled={!secret || requested} onClick={() => requestHint(uid, n)} className={`px-2 py-1 rounded-lg text-[10px] font-black border transition-all ${requested ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/10' : secret ? 'bg-indigo-600 text-white shadow-sm active:scale-95' : 'bg-neutral-800 text-neutral-600 cursor-not-allowed'}`}>
                                                                     {n} พยางค์ {requested && '✓'}
@@ -474,7 +496,7 @@
                                                             );
                                                         })}
                                                     </div>
-                                                    <div className="space-y-1.5">{Object.entries(hitsToMe).sort((a,b)=>b[1].createdAt-a[1].createdAt).map(([hid, h]) => (
+                                                    <div className="space-y-1.5">{hintEntries.map(([hid, h]) => (
                                                         h.status === 'provided' && (
                                                             <div key={hid} className="bg-green-500/5 border border-green-500/20 p-2.5 rounded-xl animate-slide-up">
                                                                 <p className="text-xs font-black text-white thai-header leading-tight italic">"{h.text}" <span className="text-[8px] text-green-500 opacity-70">({h.type} พยางค์)</span></p>
@@ -494,7 +516,7 @@
             );
         }
 
-        // --- TIERLIST GAME ---
+        // --- TIERLIST GAME COMPONENT ---
         function TierListGame({ fb, appId, roomId, onBack, user, playerName }) {
             const [roomData, setRoomData] = useState(null);
             const [search, setSearch] = useState('');
@@ -535,10 +557,10 @@
                     <div className="w-full max-w-4xl space-y-4">
                         {[{id:'S', c:'bg-red-500'}, {id:'A', c:'bg-orange-500'}, {id:'B', c:'bg-yellow-500'}, {id:'C', c:'bg-green-500'}, {id:'D', c:'bg-blue-500'}].map(t => (
                             <div key={t.id} className="flex bg-[#262626] rounded-2xl overflow-hidden border border-white/5 shadow-xl">
-                                <div className={`${t.c} w-20 flex items-center justify-center font-black text-2xl text-black/70 shadow-inner`}>{t.id}</div>
+                                <div className={`${t.c} w-20 flex items-center justify-center font-black text-2xl text-black/70 shadow-inner shrink-0`}>{t.id}</div>
                                 <div className="flex-1 p-4 min-h-[120px] flex flex-wrap gap-2">
                                     {(roomData?.tierItems || []).filter(i => i.tier === t.id).map(item => (
-                                        <div key={item.instanceId} className="relative group"><img src={item.image} className="w-14 h-20 object-cover rounded-lg border border-white/5 shadow-sm" /></div>
+                                        <div key={item.instanceId} className="relative group shrink-0"><img src={item.image} className="w-14 h-20 object-cover rounded-lg border border-white/5 shadow-sm" /></div>
                                     ))}
                                 </div>
                             </div>
